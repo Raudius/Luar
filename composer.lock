@@ -1,0 +1,70 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "ec5d69e44a714f452a88066e53856522",
+    "packages": [],
+    "packages-dev": [
+        {
+            "name": "antlr/antlr4-php-runtime",
+            "version": "0.5.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/antlr/antlr-php-runtime.git",
+                "reference": "73790bc994cec4b18a414865234ab0db198b065d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/antlr/antlr-php-runtime/zipball/73790bc994cec4b18a414865234ab0db198b065d",
+                "reference": "73790bc994cec4b18a414865234ab0db198b065d",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mbstring": "*",
+                "php": "7.4 - 8.0"
+            },
+            "require-dev": {
+                "phpstan/extension-installer": "^1.0",
+                "phpstan/phpstan": "^0.11.4",
+                "slevomat/coding-standard": "^5.0.4",
+                "squizlabs/php_codesniffer": "^3.4.1"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "0.2-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Antlr\\Antlr4\\Runtime\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "PHP 7 and 8.0 runtime for ANTLR 4",
+            "keywords": [
+                "antlr4",
+                "php",
+                "runtime"
+            ],
+            "support": {
+                "issues": "https://github.com/antlr/antlr-php-runtime/issues",
+                "source": "https://github.com/antlr/antlr-php-runtime/tree/0.5.1"
+            },
+            "time": "2021-08-13T11:44:19+00:00"
+        }
+    ],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": [],
+    "plugin-api-version": "2.3.0"
+}

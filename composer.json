@@ -1,0 +1,18 @@
+{
+    "name": "raudius/luar",
+    "description": "Lua parser for PHP using ANTLR",
+    "type": "library",
+    "require-dev": {
+        "antlr/antlr4-php-runtime": "^0.5.1"
+    },
+    "authors": [
+        {
+            "name": "raudius"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Raudius\\Luar\\": "src"
+        }
+    }
+}

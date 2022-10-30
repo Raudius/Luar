@@ -18,9 +18,8 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 		$this->interpreter = $interpreter;
 	}
 
-	public function visitBlock(Context\BlockContext $context, ?int $expectedExit = null): Scope {
-		$scope = $this->interpreter->pushScope();
-		$scope->setExpectedExit($expectedExit);
+	public function visitBlock(Context\BlockContext $context, Scope $scopeToPush = null): Scope {
+		$scope = $this->interpreter->pushScope($scopeToPush);
 
 		parent::visitBlock($context);
 

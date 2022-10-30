@@ -21,8 +21,12 @@ final class Interpreter {
 		return $this->root;
 	}
 
-	public function pushScope(): Scope {
-		$this->scope = new Scope($this->scope);
+	public function pushScope(?Scope $scope = null): Scope {
+		if ($scope) {
+			$scope->setParent($this->scope);
+		}
+
+		$this->scope = $scope ?? new Scope($this->scope);
 		return $this->scope;
 	}
 

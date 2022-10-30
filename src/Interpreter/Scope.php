@@ -117,6 +117,10 @@ class Scope {
 		return $this->parent;
 	}
 
+	public function setParent(Scope $scope): void {
+		$this->parent = $scope;
+	}
+
 	public function __set($name, LuarObject $value): void {
 		$this->assigns[$name] = $value;
 	}

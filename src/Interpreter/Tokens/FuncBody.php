@@ -45,7 +45,9 @@ class FuncBody {
 			}
 
 			// TODO: interpreter -> visit()?
-			return (new LuarStatementVisitor($interpreter))->visitBlock($this->block, Scope::EXIT_EXPECT_RETURN);
+			$newScope = new Scope();
+			$newScope->setExpectedExit(Scope::EXIT_EXPECT_RETURN);
+			return (new LuarStatementVisitor($interpreter))->visitBlock($this->block, $newScope);
 		};
 
 		return new Invokable($function);

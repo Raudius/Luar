@@ -14,7 +14,7 @@ class Literal implements LuarObject {
 
 	public function __toString(): string{
 		if (is_bool($this->value)) {
-			return $this->getValue() ? 'TRUE' : 'FALSE';
+			return $this->getValue() ? 'true' : 'false';
 		}
 		if ($this->value === null) {
 			return $this->value ?? "nil";

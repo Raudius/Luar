@@ -162,24 +162,6 @@ interface LuaVisitor extends ParseTreeVisitor
 	public function visitStatLocalVariable(Context\StatLocalVariableContext $context);
 
 	/**
-	 * Visit a parse tree produced by {@see LuaParser::attnamelist()}.
-	 *
-	 * @param Context\AttnamelistContext $context The parse tree.
-	 *
-	 * @return mixed The visitor result.
-	 */
-	public function visitAttnamelist(Context\AttnamelistContext $context);
-
-	/**
-	 * Visit a parse tree produced by {@see LuaParser::attrib()}.
-	 *
-	 * @param Context\AttribContext $context The parse tree.
-	 *
-	 * @return mixed The visitor result.
-	 */
-	public function visitAttrib(Context\AttribContext $context);
-
-	/**
 	 * Visit a parse tree produced by {@see LuaParser::laststat()}.
 	 *
 	 * @param Context\LaststatContext $context The parse tree.

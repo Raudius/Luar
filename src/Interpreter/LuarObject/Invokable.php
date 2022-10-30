@@ -32,6 +32,8 @@ class Invokable implements LuarObject {
 		$result = ($this->value)(...$argValues);
 
 		if ($result instanceof LuarObject) {
+			// TODO: verify whether this is a possible outcome
+			// 	Might be the case with injected functions.???
 			throw new RuntimeException("Does this ever happen?");
 			return $result;
 		}

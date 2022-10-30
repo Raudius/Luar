@@ -87,16 +87,25 @@ stat
     | 'for' namelist 'in' explist 'do' block 'end' 								# statForEach
     | 'function' funcname funcbody 												# statFunctionDeclare
     | 'local' 'function' NAME funcbody 											# statLocalFunction
-    | 'local' attnamelist ('=' explist)? 										# statLocalVariable
+    | 'local' varlist ('=' explist)? 											# statLocalVariable
     ;
 
+/*
+TODO: Attributes unimplemented
+
+stat
+ ...
+ | 'local' varlist ('=' explist)? 										# statLocalVariable
+
 attnamelist
-    : NAME attrib (',' NAME attrib)*
+    : attrib (',' attrib)*
     ;
 
 attrib
-    : ('<' NAME '>')?
+    //: NAME ('<' NAME '>')?
+    : NAME
     ;
+*/
 
 laststat
     : 'return' explist? | 'break' | 'continue' ';'?
@@ -123,20 +132,20 @@ explist
     ;
 
 exp
-    : ('nil') 								# expNull
-    | ('false' | 'true')		           	# expBool
-    | number								# expNumber
-    | string								# expString
+    : ('nil') 								# expNull//
+    | ('false' | 'true')		           	# expBool//
+    | number								# expNumber//
+    | string								# expString//
     | '...'									# expElipsis
     | functiondef							# expFunction
-    | prefixexp								# expPrefix
-    | tableconstructor						# expTable
+    | prefixexp								# expPrefix//
+    | tableconstructor						# expTable//
     | <assoc=right> exp operatorPower exp	# expPower
     | operatorUnary exp						# expUnary
     | exp operatorMulDivMod exp				# expMulDivMod
-    | exp operatorAddSub exp				# expAddSub
+    | exp operatorAddSub exp				# expAddSub//
     | <assoc=right> exp operatorStrcat exp	# expConcat
-    | exp operatorComparison exp			# expComparison
+    | exp operatorComparison exp			# expComparison//
     | exp operatorAnd exp					# expAnd
     | exp operatorOr exp					# expOr
     | exp operatorBitwise exp				# expBitwise

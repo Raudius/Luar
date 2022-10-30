@@ -93,6 +93,11 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 		return $this->applyNameAndArgs($varOrExp, $nameAndArgsContexts);
 	}
 
+	public function visitFunctiondef(Context\FunctiondefContext $context): LuarObject {
+		return $this->visitFuncbody($context->funcbody())
+			->asInvokable($this->interpreter);
+	}
+
 	public function visitTableconstructor(Context\TableconstructorContext $context): Table {
 		$fieldList = $this->visitFieldlist($context->fieldlist());
 		return new Table(null, $fieldList);
@@ -131,10 +136,29 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 		return [$key, $value];
 	}
 
+	public function visitExpUnary(Context\ExpUnaryContext $context): LuarObject {
+		$v = $this->visitExp($context->exp(0))->getValue();
+		switch ($context->operatorUnary()->getText()) {
+			case '-':    return new Literal(-$v);
+			case '~':    return new Literal(~$v);
+			case 'not':  return new Literal(!$v);
+			case '#': {
+				if (is_string($v)) {
+					return new Literal(strlen($v));
+				}
+				if (is_countable($v)) {
+					return new Literal (count($v));
+				}
+				throw new RuntimeException('Could not get length of non-countable value.', $context);
+			}
+		}
+
+		throw new RuntimeException('Could not evaluate the unary expression', $context);
+	}
+
 	public function visitExpComparison(Context\ExpComparisonContext $context): LuarObject {
-		$expContexts = $context->exp();
-		$v1 = $this->visitExp($expContexts[0])->getValue();
-		$v2 = $this->visitExp($expContexts[1])->getValue();
+		$v1 = $this->visitExp($context->exp(0))->getValue();
+		$v2 = $this->visitExp($context->exp(1))->getValue();
 
 		switch ($context->operatorComparison()->getText()) {
 			case '<':  return new Literal($v1 < $v2);
@@ -149,9 +173,8 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 	}
 
 	public function visitExpAddSub(Context\ExpAddSubContext $context): LuarObject {
-		$expContexts = $context->exp();
-		$v1 = $this->visitExp($expContexts[0])->getValue();
-		$v2 = $this->visitExp($expContexts[1])->getValue();
+		$v1 = $this->visitExp($context->exp(0))->getValue();
+		$v2 = $this->visitExp($context->exp(1))->getValue();
 
 		switch ($context->operatorAddSub()->getText()) {
 			case '+':  return new Literal($v1 + $v2);
@@ -161,7 +184,57 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 		throw new RuntimeException('Could not evaluate the add/sub expression', $context);
 	}
 
-	public function shouldVisitNextChild(RuleNode $node, $currentResult): bool {
-		return $this->interpreter->getScope()->getExit() === null;
+	public function visitExpMulDivMod(Context\ExpMulDivModContext $context): LuarObject {
+		$v1 = $this->visitExp($context->exp(0))->getValue();
+		$v2 = $this->visitExp($context->exp(1))->getValue();
+
+		switch ($context->operatorAddSub()->getText()) {
+			case '*':  return new Literal($v1 * $v2);
+			case '/':  return new Literal($v1 / $v2);
+		}
+
+		throw new RuntimeException('Could not evaluate the add/sub expression', $context);
+	}
+
+	public function visitExpPower(Context\ExpPowerContext $context): LuarObject {
+		$v1 = $this->visitExp($context->exp(0))->getValue();
+		$v2 = $this->visitExp($context->exp(1))->getValue();
+
+		if (!is_numeric($v1) || !is_numeric($v2)) {
+			throw new RuntimeException('Exponent calculations must be performed on numeric values', $context);
+		}
+
+		return new Literal($v1 ** $v2);
+	}
+
+	public function visitExpOr(Context\ExpOrContext $context): LuarObject {
+		$v1 = $this->visitExp($context->exp(0))->getValue();
+		$v2 = $this->visitExp($context->exp(1))->getValue();
+		return new Literal($v1 || $v2);
+	}
+
+	public function visitExpAnd(Context\ExpAndContext $context): LuarObject {
+		$v1 = $this->visitExp($context->exp(0))->getValue();
+		$v2 = $this->visitExp($context->exp(1))->getValue();
+		return new Literal($v1 && $v2);
+	}
+
+	public function visitExpBitwise(Context\ExpBitwiseContext $context): LuarObject {
+		$v1 = $this->visitExp($context->exp(0))->getValue();
+		$v2 = $this->visitExp($context->exp(1))->getValue();
+
+		switch ($context->operatorBitwise()->getText()) {
+			case '&':  return new Literal($v1 & $v2);
+			case '|':  return new Literal($v1 | $v2);
+			case '~': return new Literal($v1 ^ $v2);
+			case '<<': return new Literal($v1 >> $v2);
+			case '>>': return new Literal($v1 << $v2);
+		}
+
+		throw new RuntimeException('Could not evaluate the bitwise expression', $context);
+	}
+
+	public function visitExpElipsis(Context\ExpElipsisContext $context): LuarObject {
+		return new Reference($this->interpreter->getScope(), '__elipsis__');
 	}
 }

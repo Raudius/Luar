@@ -2,10 +2,13 @@
 namespace Raudius\Luar\Interpreter;
 
 use Antlr\Antlr4\Runtime\RuleContext;
+use Antlr\Antlr4\Runtime\Tree\RuleNode;
 use Antlr\Antlr4\Runtime\Tree\TerminalNode;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\Reference;
+use Raudius\Luar\Interpreter\Tokens\FuncBody;
+use Raudius\Luar\Interpreter\Tokens\FuncName;
 use Raudius\Luar\Interpreter\Tokens\NameAndArgs;
 use Raudius\Luar\Interpreter\Tokens\VarSuffix;
 use Raudius\Luar\Parser\LuaBaseVisitor;
@@ -36,6 +39,27 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 
 		throw new RuntimeException("Expression did not resolve to LuarObject.", $context);
 	}
+
+	public function visitFuncname(Context\FuncnameContext $context): FuncName {
+		$names = $this->getNameChain($context);
+
+		$methodContext = $context->funcname_method();
+		$method = $methodContext ? $methodContext->NAME()->getText() : null;
+
+		return new FuncName($names, $method);
+	}
+
+	public function visitFuncbody(Context\FuncbodyContext $context): FuncBody {
+		$namelist = $context->parlist() ? $context->parlist()->namelist() : null;
+		$parameters = $namelist ? $this->getNameChain($namelist) : [];
+
+		if ($context->parlist() && $context->parlist()->elipsis()) {
+			$parameters[] = '...';
+		}
+
+		return new FuncBody($parameters, $context->block());
+	}
+
 	/**
 	 * @return string[]
 	 */
@@ -201,5 +225,9 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 			return $this->visitExp($exp);
 		}
 		return null;
+	}
+
+	public function shouldVisitNextChild(RuleNode $node, $currentResult): bool {
+		return $this->interpreter->getScope()->getExit() === null;
 	}
 }

@@ -132,20 +132,20 @@ explist
     ;
 
 exp
-    : ('nil') 								# expNull//
-    | ('false' | 'true')		           	# expBool//
-    | number								# expNumber//
-    | string								# expString//
+    : ('nil') 								# expNull
+    | ('false' | 'true')		           	# expBool
+    | number								# expNumber
+    | string								# expString
     | '...'									# expElipsis
     | functiondef							# expFunction
-    | prefixexp								# expPrefix//
-    | tableconstructor						# expTable//
+    | prefixexp								# expPrefix
+    | tableconstructor						# expTable
     | <assoc=right> exp operatorPower exp	# expPower
     | operatorUnary exp						# expUnary
     | exp operatorMulDivMod exp				# expMulDivMod
-    | exp operatorAddSub exp				# expAddSub//
+    | exp operatorAddSub exp				# expAddSub
     | <assoc=right> exp operatorStrcat exp	# expConcat
-    | exp operatorComparison exp			# expComparison//
+    | exp operatorComparison exp			# expComparison
     | exp operatorAnd exp					# expAnd
     | exp operatorOr exp					# expOr
     | exp operatorBitwise exp				# expBitwise

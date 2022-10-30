@@ -137,9 +137,14 @@ class Scope {
 		$info = [];
 
 		foreach ($this->assigns as $k => $v) {
-			$info[$k] = $v->__toString();
+			$s = $v instanceof LuarObject ? $v->__toString() : (string) $v;
+			$info[$k] = $s;
 		}
 
 		return [$info];
+	}
+
+	public function __toString() {
+		return json_encode($this->__debugInfo()) ?: 'Scope';
 	}
 }

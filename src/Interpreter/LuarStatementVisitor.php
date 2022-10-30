@@ -2,8 +2,6 @@
 namespace Raudius\Luar\Interpreter;
 
 use Raudius\Luar\Interpreter\LuarObject\Literal;
-use Raudius\Luar\Interpreter\Tokens\FuncBody;
-use Raudius\Luar\Interpreter\Tokens\FuncName;
 use Raudius\Luar\Parser\Context;
 
 class LuarStatementVisitor extends LuarExpressionVisitor {
@@ -47,26 +45,6 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		$funcBody = $this->visitFuncbody($context->funcbody());
 
 		$this->interpreter->getScope()->assign($name, $funcBody->asInvokable($this->interpreter));
-	}
-
-	public function visitFuncname(Context\FuncnameContext $context): FuncName {
-		$names = $this->getNameChain($context);
-
-		$methodContext = $context->funcname_method();
-		$method = $methodContext ? $methodContext->NAME()->getText() : null;
-
-		return new FuncName($names, $method);
-	}
-
-	public function visitFuncbody(Context\FuncbodyContext $context) {
-		$namelist = $context->parlist() ? $context->parlist()->namelist() : null;
-		$parameters = $namelist ? $this->getNameChain($namelist) : [];
-
-		if ($context->parlist() && $context->parlist()->elipsis()) {
-			$parameters[] = '...';
-		}
-
-		return new FuncBody($parameters, $context->block());
 	}
 
 	public function visitStatAssign(Context\StatAssignContext $context) {

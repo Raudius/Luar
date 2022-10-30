@@ -36,10 +36,18 @@ class Reference implements LuarObject {
 			throw new RuntimeException('Cannot assign value to non-object.');
 		}
 
+		if ($value instanceof Reference) {
+			$value = $value->getObject();
+		}
+
 		$scope->assign($this->key, $value);
 	}
 
 	public function __toString(): string {
 		return "Reference {$this->parent->__toString()}->{$this->key}";
+	}
+
+	public function getKey(): string {
+		return $this->key;
 	}
 }

@@ -16,7 +16,6 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 	 * @return LuarObject[]
 	 */
 	public function visitExplist(ExplistContext $context): array {
-		// todo check instanceof visit === LuarObject
 		$exps = $context->exp();
 		if (is_array($exps)) {
 			return array_map([$this, 'visitExp'], $exps);
@@ -218,6 +217,6 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 	}
 
 	public function visitExpElipsis(Context\ExpElipsisContext $context): LuarObject {
-		return new Reference($this->interpreter->getScope(), '__elipsis__');
+		return new Reference($this->interpreter->getScope(), Reference::VAR_INTERNAL_ELIPSIS);
 	}
 }

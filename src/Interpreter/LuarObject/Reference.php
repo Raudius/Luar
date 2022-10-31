@@ -5,6 +5,7 @@ use Raudius\Luar\Interpreter\RuntimeException;
 use Raudius\Luar\Interpreter\Scope;
 
 class Reference implements LuarObject {
+	public const VAR_INTERNAL_ELIPSIS = '__internal__';
 	private string $key;
 	/** @var Reference|Scope $scope */
 	private $parent;

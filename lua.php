@@ -37,3 +37,5 @@ try {
 	echo PHP_EOL;
 	echo PHP_EOL;
 }
+
+echo (json_encode($luar->getGlobals()) ?: 'JSON encode error') . PHP_EOL;

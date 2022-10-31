@@ -4,6 +4,7 @@ namespace Raudius\Luar\Interpreter\Tokens;
 use Raudius\Luar\Interpreter\Interpreter;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
+use Raudius\Luar\Interpreter\LuarObject\Reference;
 use Raudius\Luar\Interpreter\LuarObject\Table;
 use Raudius\Luar\Interpreter\LuarStatementVisitor;
 use Raudius\Luar\Interpreter\Scope;
@@ -32,9 +33,7 @@ class FuncBody {
 			$argc = count($args);
 			for ($i=0; $i<$argc; $i++) {
 				if (isset($parameterNames[$i])) {
-					$arg = is_array($args[$i]) ? $args[$i][0] : $args[$i]; // todo fix list argument
-
-					$scope->assign($parameterNames[$i], new Literal($arg));
+					$scope->assign($parameterNames[$i], new Literal($args[$i]));
 				} elseif (is_array($args[$i])) {
 					$extraParams = [...$extraParams, ...$args[$i]];
 				} else {
@@ -43,10 +42,9 @@ class FuncBody {
 			}
 
 			if ($isVariadic) {
-				$scope->assign('__elipsis__', Table::fromArray($extraParams));
+				$scope->assign(Reference::VAR_INTERNAL_ELIPSIS, Table::fromArray($extraParams));
 			}
 
-			// TODO: interpreter -> visit()?
 			$newScope = new Scope();
 			$newScope->setExpectedExit(Scope::EXIT_EXPECT_RETURN);
 			return (new LuarStatementVisitor($interpreter))->visitBlock($this->block, $newScope);

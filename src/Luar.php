@@ -5,6 +5,7 @@ use Raudius\Luar\Interpreter\Interpreter;
 use Raudius\Luar\Interpreter\LuarException;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
+use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\Table;
 
 class Luar {
@@ -37,5 +38,14 @@ class Luar {
 		}
 
 		$invokable->invoke($args);
+	}
+
+	public function getGlobals(): array {
+		return array_map(
+			static function (LuarObject $luarObject) {
+				return $luarObject->getValue();
+			},
+			$this->interpreter->getRoot()->getAssigns()
+		);
 	}
 }

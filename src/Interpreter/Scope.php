@@ -7,6 +7,13 @@ use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 
 class Scope {
+	public const EXIT_RETURN = 1;
+	public const EXIT_BREAK = 2;
+	public const EXIT_CONTINUE = 3;
+
+	public const EXIT_EXPECT_RETURN = 1;
+	public const EXIT_EXPECT_BREAK_CONTINUE = 2;
+
 	/** @var LuarObject[] */
 	protected array $assigns;
 	private ?Scope $parent;
@@ -15,14 +22,6 @@ class Scope {
 	private ?int $expectExit = null;
 	/** @var LuarObject[]|null */
 	private ?array $returnList = null;
-
-	public const EXIT_RETURN = 1;
-	public const EXIT_BREAK = 2;
-	public const EXIT_CONTINUE = 3;
-
-	public const EXIT_EXPECT_RETURN = 1;
-	public const EXIT_EXPECT_BREAK_CONTINUE = 2;
-
 
 	public function __construct(?Scope $parent = null, array $assigns = []) {
 		$this->parent = $parent;

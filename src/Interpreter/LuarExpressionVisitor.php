@@ -73,24 +73,7 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 
 
 	public function visitPrefixexp(Context\PrefixexpContext $context): LuarObject {
-		$varOrExp = $this->visit($context->varOrExp());
-
-		if (!$varOrExp instanceof LuarObject) {
-			var_dump($varOrExp);
-			throw new RuntimeException('Unexpected resolution of varOrExp context ' , $context);
-		}
-
-		if ($varOrExp instanceof Reference) {
-			$varOrExp = $varOrExp->getObject();
-		}
-
-		$nameAndArgsContexts = $context->nameAndArgs();
-		if (!$nameAndArgsContexts) {
-			return $varOrExp;
-		}
-
-		$nameAndArgsContexts = is_array($nameAndArgsContexts) ? $nameAndArgsContexts : [$nameAndArgsContexts];
-		return $this->applyNameAndArgs($varOrExp, $nameAndArgsContexts);
+		return $this->evalArgumentedExp($context->varOrExp(), $context->nameAndArgs());
 	}
 
 	public function visitFunctiondef(Context\FunctiondefContext $context): LuarObject {

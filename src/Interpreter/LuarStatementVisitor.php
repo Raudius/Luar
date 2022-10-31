@@ -2,6 +2,8 @@
 namespace Raudius\Luar\Interpreter;
 
 use Raudius\Luar\Interpreter\LuarObject\Literal;
+use Raudius\Luar\Interpreter\LuarObject\LuarObject;
+use Raudius\Luar\Interpreter\LuarObject\Reference;
 use Raudius\Luar\Parser\Context;
 
 class LuarStatementVisitor extends LuarExpressionVisitor {

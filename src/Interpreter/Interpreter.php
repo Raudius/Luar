@@ -1,6 +1,12 @@
 <?php
 namespace Raudius\Luar\Interpreter;
 
+use Antlr\Antlr4\Runtime\CommonTokenStream;
+use Antlr\Antlr4\Runtime\Error\Listeners\DiagnosticErrorListener;
+use Antlr\Antlr4\Runtime\InputStream;
+use Raudius\Luar\Parser\LuaLexer;
+use Raudius\Luar\Parser\LuaParser;
+
 final class Interpreter {
 	private Scope $scope;
 	private Scope $root;
@@ -11,6 +17,15 @@ final class Interpreter {
 	}
 
 	public function eval(string $program): void {
+		$lexer = new LuaLexer(InputStream::fromString($program));
+		$tokens = new CommonTokenStream($lexer);
+		$parser = new LuaParser($tokens);
+		$parser->addErrorListener(new DiagnosticErrorListener());
+		$parser->setBuildParseTree(true);
+
+		(new LuarStatementVisitor($this))->visit($parser->chunk());
+
+		var_dump($this->getRoot());
 	}
 
 	public function getScope(): Scope {

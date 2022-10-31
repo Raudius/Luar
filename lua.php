@@ -7,6 +7,7 @@ use Antlr\Antlr4\Runtime\CommonTokenStream;
 use Antlr\Antlr4\Runtime\Error\Listeners\DiagnosticErrorListener;
 use Antlr\Antlr4\Runtime\InputStream;
 use Raudius\Luar\Interpreter\Interpreter;
+use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarStatementVisitor;
 use Raudius\Luar\Interpreter\RuntimeException;
 use Raudius\Luar\Interpreter\Scope;
@@ -22,24 +23,17 @@ $builtins = [
 	}
 ];
 
-$scope = new Scope(null, $builtins);
+$print = static function ($in) {
+	echo $in . PHP_EOL;
+};
 
-$lexer = new LuaLexer($input);
-$tokens = new CommonTokenStream($lexer);
-$parser = new LuaParser($tokens);
-$parser->addErrorListener(new DiagnosticErrorListener());
-$parser->setBuildParseTree(true);
-$tree = $parser->chunk();
-
-
-$interpreter = new Interpreter();
 try {
-	(new LuarStatementVisitor($interpreter))->visit($tree);
+	$luar = new Luar();
+	$luar->assign('print', $print);
+	$luar->eval(file_get_contents(__DIR__ . '/example.lua'));
 } catch (RuntimeException $e) {
 	echo $e->getMessage() . PHP_EOL . PHP_EOL;
 	echo $e->getContext() ? $e->getContext()->getText() : null;
 	echo PHP_EOL;
 	echo PHP_EOL;
 }
-
-var_dump($interpreter->getRoot());

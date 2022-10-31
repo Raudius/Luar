@@ -4,7 +4,6 @@ namespace Raudius\Luar\Interpreter\Tokens;
 use Raudius\Luar\Interpreter\Interpreter;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
-use Raudius\Luar\Interpreter\LuarObject\Reference;
 use Raudius\Luar\Interpreter\LuarObject\Table;
 use Raudius\Luar\Interpreter\LuarStatementVisitor;
 use Raudius\Luar\Interpreter\Scope;
@@ -24,13 +23,11 @@ class FuncBody {
 		$parameterNames = $this->parameterNames;
 
 		$function = function (...$args) use ($interpreter, $parameterNames) {
-			var_dump($parameterNames);
 			$scope = $interpreter->getScope();
 			$isVariadic = end($this->parameterNames) === '...';
 			$isVariadic && array_pop($parameterNames);
 
-			var_dump(count($args));
-			var_dump($args);
+
 			$extraParams = [];
 			$argc = count($args);
 			for ($i=0; $i<$argc; $i++) {
@@ -38,7 +35,6 @@ class FuncBody {
 					$arg = is_array($args[$i]) ? $args[$i][0] : $args[$i]; // todo fix list argument
 
 					$scope->assign($parameterNames[$i], new Literal($arg));
-					echo "{$parameterNames[$i]} = $arg\n";
 				} elseif (is_array($args[$i])) {
 					$extraParams = [...$extraParams, ...$args[$i]];
 				} else {

@@ -5,6 +5,7 @@ use Antlr\Antlr4\Runtime\RuleContext;
 use Antlr\Antlr4\Runtime\Tree\RuleNode;
 use Antlr\Antlr4\Runtime\Tree\TerminalNode;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
+use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\Reference;
 use Raudius\Luar\Interpreter\Tokens\FuncBody;
@@ -213,7 +214,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 		return $object;
 	}
 
-	public function visitVarOrExp(Context\VarOrExpContext $context) {
+	public function visitVarOrExp(Context\VarOrExpContext $context): LuarObject {
 		if ($var = $context->variable()) {
 			$varOrExp = $this->visit($var);
 			if ($varOrExp instanceof LuarObject) {
@@ -224,10 +225,32 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 		if ($exp = $context->exp()) {
 			return $this->visitExp($exp);
 		}
-		return null;
+		return new Literal(null);
 	}
 
 	public function shouldVisitNextChild(RuleNode $node, $currentResult): bool {
 		return $this->interpreter->getScope()->getExit() === null;
+	}
+
+	public function visitFunctioncall(Context\FunctioncallContext $context) {
+		return $this->evalArgumentedExp($context->varOrExp(), $context->nameAndArgs());
+	}
+
+	/**
+	 * @param Context\NameAndArgsContext|Context\NameAndArgsContext[]|null $nameAndArgsContexts
+	 */
+	public function evalArgumentedExp(Context\VarOrExpContext $varOrExpContext, $nameAndArgsContexts): LuarObject {
+		$varOrExp = $this->visitVarOrExp($varOrExpContext);
+
+		if ($varOrExp instanceof Reference) {
+			$varOrExp = $varOrExp->getObject();
+		}
+
+		if (!$nameAndArgsContexts) {
+			return $varOrExp;
+		}
+
+		$nameAndArgsContexts = is_array($nameAndArgsContexts) ? $nameAndArgsContexts : [$nameAndArgsContexts];
+		return $this->applyNameAndArgs($varOrExp, $nameAndArgsContexts);
 	}
 }

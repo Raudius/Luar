@@ -19,34 +19,31 @@ class Invokable implements LuarObject {
 		return $this->value;
 	}
 
-	/**
-	 * @param LuarObject[] $args
-	 */
-	public function invoke(array $args): LuarObject {
+	public function invoke(ObjectList $args): ObjectList {
 		$argValues = [];
-		foreach ($args as $arg) {
+		foreach ($args->getObjects() as $arg) {
 			$argValues[] = $arg->getValue();
 		}
 
-		// TODO: revisit returning values
 		$result = ($this->value)(...$argValues);
 
-		if ($result instanceof LuarObject) {
-			// TODO: verify whether this is a possible outcome
-			// 	Might be the case with injected functions.???
-			throw new RuntimeException("Does this ever happen?");
+		if ($result instanceof Scope) { // TODO instanceof Table?
+			$result = $result->getReturn();
+		}
+
+		if ($result instanceof ObjectList) {
 			return $result;
 		}
 
-		if ($result instanceof Scope) {
-			return $result->getReturn();
-		}
-
 		if (is_array($result)) {
-			return new Table(null, $result);
+			return new ObjectList( [new Table(null, $result)] );
 		}
 
-		return new Literal($result);
+		if (is_callable($result)) {
+			return new ObjectList( [new Invokable($result)] );
+		}
+
+		return new ObjectList( [new Literal($result)] );
 	}
 
 

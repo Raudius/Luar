@@ -3,6 +3,7 @@ namespace Raudius\Luar\Interpreter;
 
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
+use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Reference;
 use Raudius\Luar\Parser\Context;
 
@@ -50,21 +51,21 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 	}
 
 	public function visitStatAssign(Context\StatAssignContext $context) {
-		$varlist = $this->visitVarlist($context->varlist(), $this->interpreter->getRoot());
+		$varlist = $this->visitVarlist($context->varlist());
 		$explist = $this->visitExplist($context->explist());
 
 		foreach ($varlist as $i => $var) {
-			$exp = $explist[$i] ?? new Literal(null);
+			$exp = $explist->getExpression($i);
 			$var->setValue($exp);
 		}
 	}
 
 	public function visitStatLocalVariable(Context\StatLocalVariableContext $context) {
-		$varlist = $this->visitVarlist($context->varlist());
-		$explist = $this->visitExplist($context->explist());
+		$varlist = $this->visitVarlist($context->varlist(), true);
+		$explist = $context->explist() ? $this->visitExplist($context->explist()) : new ObjectList([]);
 
 		foreach ($varlist as $i => $var) {
-			$exp = $explist[$i] ?? new Literal(null);
+			$exp = $explist->getExpression($i);
 			$var->setValue($exp);
 		}
 	}
@@ -75,31 +76,33 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		$expContexts = $context->exp();
 		$expContexts = is_array($expContexts) ? $expContexts : [$expContexts];
 
-		[$it, $end, $step] = array_map(
+		$exps = array_map(
 			function (Context\ExpContext $exp) {
 				return $this->visitExp($exp)->getValue();
 			}, $expContexts
 		);
 
+		[$it, $end, $step] = [$exps[0], $exps[1], $exps[2] ?? 1];
+
 		if (!is_numeric($it)) {
-			throw new RuntimeException('Numeric for loop: iterator initialisation must be numeric.', $context);
+			throw new RuntimeException('Numeric for loop: start expression must be numeric.', $context);
 		}
-		if ($end !== null && !is_numeric($end)) {
-			throw new RuntimeException('Numeric for loop: second expression, "end", must be numeric (or nil).', $context);
+		if (!is_numeric($end)) {
+			throw new RuntimeException('Numeric for loop: end expression, must be numeric.', $context);
 		}
-		if (($step !== null && !is_numeric($step)) || $step === 0) {
-			throw new RuntimeException('Numeric for loop: third expression, "step", must be a non-zero number (or nil).', $context);
+		if (!is_numeric($step) || $step === 0) {
+			throw new RuntimeException('Numeric for loop: step expression must be a non-zero number (or nil).', $context);
 		}
 
 		$checkMoreThan = $step < 0;
 		while($checkMoreThan ? $it >= $end : $it <= $end) {
-			$newScope = new Scope();
-			$newScope->assign($name, new Literal($it));
+			$newScope = new Scope($this->interpreter->getScope());
 			$newScope->setExpectedExit(Scope::EXIT_EXPECT_BREAK_CONTINUE);
-
+			$newScope->assign($name, new Literal($it));
 			$scope = $this->visitBlock($context->block(), $newScope);
 
 			if ($scope->getExit() === Scope::EXIT_BREAK || $scope->getExit() === Scope::EXIT_RETURN) {
+				$scope->resetExit();
 				break;
 			}
 
@@ -117,7 +120,7 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 
 		switch ($firstLetter) {
 			case 'r': // return
-				$explist = $context->explist() ? $this->visitExplist($context->explist()) : null;
+				$explist = $context->explist() ? $this->visitExplist($context->explist()) : new ObjectList();
 				$scope->setExit(Scope::EXIT_RETURN, $explist);
 				break;
 			case 'b': // break
@@ -140,12 +143,13 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		}
 
 		while ($this->visitExp($expContext)->getValue()) {
-			$newScope = new Scope();
+			$newScope = new Scope($this->interpreter->getScope());
 			$newScope->setExpectedExit(Scope::EXIT_EXPECT_BREAK_CONTINUE);
 
 			$scope = $this->visitBlock($blockContext, $newScope);
 
 			if ($scope->getExit() === Scope::EXIT_BREAK || $scope->getExit() === Scope::EXIT_RETURN) {
+				$scope->resetExit();
 				break;
 			}
 		}
@@ -159,15 +163,17 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 			throw new RuntimeException('[INTERNAL ERROR] Could not parse while loop', $context);
 		}
 
-		do {
-			$newScope = new Scope();
-			$newScope->setExpectedExit(Scope::EXIT_EXPECT_BREAK_CONTINUE);
 
+		do {
+			$newScope = new Scope($this->interpreter->getScope());
+			$newScope->setExpectedExit(Scope::EXIT_EXPECT_BREAK_CONTINUE);
 			$scope = $this->visitBlock($blockContext, $newScope);
 
 			if ($scope->getExit() === Scope::EXIT_BREAK || $scope->getExit() === Scope::EXIT_RETURN) {
+				$scope->resetExit();
 				break;
 			}
-		} while ($this->visitExp($expContext)->getValue());
+		} while (!$this->visitExp($expContext, $newScope)->getValue());
+
 	}
 }

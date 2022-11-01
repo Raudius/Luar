@@ -24,8 +24,6 @@ final class Interpreter {
 		$parser->setBuildParseTree(true);
 
 		(new LuarStatementVisitor($this))->visit($parser->chunk());
-
-		var_dump($this->getRoot());
 	}
 
 	public function getScope(): Scope {
@@ -37,19 +35,21 @@ final class Interpreter {
 	}
 
 	public function pushScope(?Scope $scope = null): Scope {
-		if ($scope) {
-			$scope->setParent($this->scope);
-		}
-
 		$this->scope = $scope ?? new Scope($this->scope);
 		return $this->scope;
 	}
 
-	public function popScope(): void {
-		$scope = $this->scope->getParent();
+	public function popScope(): Scope {
+		$oldScope = $this->scope;
+		$scope = $oldScope->getParent();
 		if ($scope === null) {
 			throw new RuntimeException("FATAL ERROR! Attempted to pop root scope.");
 		}
+		$this->scope = $scope;
+		return $oldScope;
+	}
+
+	public function setScope(Scope $scope) {
 		$this->scope = $scope;
 	}
 }

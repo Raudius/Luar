@@ -5,8 +5,8 @@ use Antlr\Antlr4\Runtime\RuleContext;
 use Antlr\Antlr4\Runtime\Tree\RuleNode;
 use Antlr\Antlr4\Runtime\Tree\TerminalNode;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
-use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
+use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Reference;
 use Raudius\Luar\Interpreter\Tokens\FuncBody;
 use Raudius\Luar\Interpreter\Tokens\FuncName;
@@ -23,16 +23,19 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 	}
 
 	public function visitBlock(Context\BlockContext $context, Scope $scopeToPush = null): Scope {
-		$scope = $this->interpreter->pushScope($scopeToPush);
+		$this->interpreter->pushScope($scopeToPush);
 
 		parent::visitBlock($context);
 
-		$this->interpreter->popScope();
-		return $scope;
+		return $this->interpreter->popScope();
 	}
 
-	protected function visitExp(Context\ExpContext $context): LuarObject {
+	protected function visitExp(Context\ExpContext $context, Scope $scope = null): LuarObject {
+		$scope && $this->interpreter->pushScope($scope);
+
 		$result = $this->visit($context);
+
+		$scope && $this->interpreter->popScope();
 
 		if ($result instanceof LuarObject) {
 			return $result;
@@ -86,15 +89,15 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 		return $names;
 	}
 
-	public function visitVarlist(Context\VarlistContext $context, Scope $scope = null): array {
+	public function visitVarlist(Context\VarlistContext $context, bool $declareLocal = false): array {
 		$variableContexts = $context->variable();
 		$variableContexts = is_array($variableContexts) ? $variableContexts : [$variableContexts];
 
 		/** @var Reference[] $variables */
 		$variables =  array_map(
-			function (Context\VariableContext $context) use ($scope) {
+			function (Context\VariableContext $context) use ($declareLocal) {
 				if ($context instanceof Context\NameVariableContext) {
-					return $this->visitNameVariable($context, $scope);
+					return $this->visitNameVariable($context, $declareLocal);
 				}
 
 				return $this->visit($context);
@@ -104,23 +107,22 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 		return $variables;
 	}
 
-	public function visitNameVariable(Context\NameVariableContext $context, ?Scope $scope = null) {
-		$nameContext = $context->NAME();
-		if (!$nameContext) {
+	public function visitNameVariable(Context\NameVariableContext $context, ?bool $declareLocal = false): LuarObject {
+		$name = $context->NAME() ? $context->NAME()->getText() : null;
+		if (!$name) {
 			throw new RuntimeException('[ERROR INTERNAL] Unknown name variable declaration.', $context);
 		}
 
-		$scope = $scope ?? $this->interpreter->getScope();
+		$scope = $this->interpreter->getScope();
+		$scope = $declareLocal ? $scope : $scope->getScope($name);
 
-		$reference = new Reference($scope, $nameContext->getText());
 		$varSuffixes = $context->varSuffix() ?: [];
 		$varSuffixes = is_array($varSuffixes) ? $varSuffixes : [$varSuffixes];
 
-
-		return $this->applyVarSuffixes($reference, array_map([$this, 'visitVarSuffix'], $varSuffixes));
+		return $this->applyVarSuffixes(new Reference($scope, $name), array_map([$this, 'visitVarSuffix'], $varSuffixes));
 	}
 
-	public function visitExpVariable(Context\ExpVariableContext $context) {
+	public function visitExpVariable(Context\ExpVariableContext $context): LuarObject {
 		$expContext = $context->exp();
 		if (!$expContext) {
 			throw new RuntimeException('[ERROR INTERNAL] Unknown expression variable declaration.', $context);
@@ -131,14 +133,16 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 			throw new RuntimeException('Cannot get properties of non-scopable expression.', $context);
 		}
 
-		return $this->applyVarSuffixes($object, $context->varSuffix());
+		$varSuffixes = $context->varSuffix() ?: [];
+		$varSuffixes = is_array($varSuffixes) ? $varSuffixes : [$varSuffixes];
+		return $this->applyVarSuffixes($object, array_map([$this, 'visitVarSuffix'], $varSuffixes));
 	}
 
 	/**
 	 * @param Reference|Scope $variable
 	 * @param VarSuffix[] $suffixes
 	 */
-	protected function applyVarSuffixes($variable, array $suffixes): Reference {
+	protected function applyVarSuffixes($variable, array $suffixes): LuarObject {
 		foreach ($suffixes as $suffix) {
 			$obj = $this->applyNameAndArgs($variable, $suffix->nameAndArgs);
 			if (!$obj instanceof Reference && !$obj instanceof Scope) {
@@ -175,22 +179,23 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 		return new NameAndArgs($args, $name);
 	}
 
-	public function visitArgs(Context\ArgsContext $context) {
+	public function visitArgs(Context\ArgsContext $context): ObjectList {
 		if ($explist = $context->explist()) {
 			return $this->visitExplist($explist);
 		}
 
-		return [];
+		return new ObjectList([]);
 		// TODO fix table / single arguments
 		throw new RuntimeException('[UNIMPLEMENTED] Function calls only possible as expression list');
 	}
 
 	/**
-	 * @param Scope|LuarObject|LuarObject[]|null $object
+	 * @param Scope|LuarObject|null $object
 	 * @param Context\NameAndArgsContext[] $nameAndArgsContexts
 	 * @return LuarObject
 	 */
 	public function applyNameAndArgs($object, array $nameAndArgsContexts): LuarObject {
+		$oo = $object;
 		foreach ($nameAndArgsContexts as $nameAndArgsContext) {
 			$nameAndArgs = $this->visitNameAndArgs($nameAndArgsContext);
 			if ($nameAndArgs->name) {
@@ -203,8 +208,12 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 					$object = $object->getObject();
 				}
 
+				if ($object instanceof ObjectList) {
+					$object = $object->getExpression(0);
+				}
+
 				if (!$object instanceof Invokable) {
-					throw new RuntimeException('Attempted to call a non-function ' . get_class($object), $nameAndArgsContext);
+					throw new RuntimeException('Attempted to call a non-function ' . $nameAndArgs->name . '  ' . get_class($object) . ' : ' . get_class($oo), $nameAndArgsContext);
 				}
 
 				$object = $object->invoke($nameAndArgs->args);
@@ -225,7 +234,8 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 		if ($exp = $context->exp()) {
 			return $this->visitExp($exp);
 		}
-		return new Literal(null);
+
+		throw new RuntimeException('Variable or expression could not be evaluated.', $context);
 	}
 
 	public function shouldVisitNextChild(RuleNode $node, $currentResult): bool {

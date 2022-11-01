@@ -5,6 +5,8 @@ namespace Raudius\Luar\Interpreter;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
+use Raudius\Luar\Interpreter\LuarObject\ObjectList;
+use Raudius\Luar\Interpreter\LuarObject\Table;
 
 class Scope {
 	public const EXIT_RETURN = 1;
@@ -20,8 +22,7 @@ class Scope {
 
 	private ?int $exit = null;
 	private ?int $expectExit = null;
-	/** @var LuarObject[]|null */
-	private ?array $returnList = null;
+	private ?LuarObject $return = null;
 
 	public function __construct(?Scope $parent = null, array $assigns = []) {
 		$this->parent = $parent;
@@ -31,6 +32,12 @@ class Scope {
 	public function get(string $key): LuarObject {
 		return $this->assigns[$key]
 			?? ($this->parent ? $this->parent->get($key) : new Literal(null));
+	}
+
+	public function getScope(string $key): Scope {
+		return (isset($this->assigns[$key]) || !$this->parent)
+			? $this
+			: $this->parent->getScope($key);
 	}
 
 	public function gets(array $keys) {
@@ -46,10 +53,7 @@ class Scope {
 		return $scope;
 	}
 
-	/**
-	 * @param LuarObject[] $args
-	 */
-	public function callFunction(string $name, array $args): LuarObject {
+	public function callFunction(string $name, ObjectList $args): LuarObject {
 		$invokable = $this->get($name);
 
 		if ($invokable === null) {
@@ -63,15 +67,12 @@ class Scope {
 		return $invokable->invoke($args);
 	}
 
-	/**
-	 * @param LuarObject[] $args
-	 */
-	public function callMethod(string $name, array $args): LuarObject {
+	public function callMethod(string $name, ObjectList $args): LuarObject {
 		if (!$this instanceof LuarObject) {
 			throw new RuntimeException('Attempted to call method on non-object.');
 		}
 
-		array_unshift($args, $this);
+		//array_unshift($args, $this); TODO FIX
 		return $this->callFunction($name, $args);
 	}
 
@@ -79,29 +80,27 @@ class Scope {
 		$this->expectExit = $expectedExit;
 	}
 
-	public function setExit(int $exit_type, array $returnList = null): void {
+	public function setExit(int $exit_type, ?LuarObject $return = null): void {
 		$this->exit = $exit_type;
-		$this->returnList = $returnList;
+		$this->return = $return;
 
 		// Propagate exit
 		$exit_type_expect = $exit_type === self::EXIT_RETURN ? self::EXIT_EXPECT_RETURN : self::EXIT_EXPECT_BREAK_CONTINUE;
 		if (!$this->expectExit || $exit_type_expect !== $this->expectExit) {
-			$this->parent && $this->parent->setExit($exit_type, $returnList);
+			$this->parent && $this->parent->setExit($exit_type, $return);
 		}
+	}
+
+	public function resetExit(): void {
+		$this->exit = null;
 	}
 
 	public function getExit(): ?int {
 		return $this->exit;
 	}
 
-	/**
-	 * @return LuarObject[]|LuarObject|null
-	 */
-	public function getReturn() {
-		if (is_array($this->returnList)) {
-			return count($this->returnList) === 1 ? $this->returnList[0] : $this->returnList;
-		}
-		return new Literal(null);
+	public function getReturn(): LuarObject {
+		return $this->return ?? new Literal(null);
 	}
 
 	public function assign(string $key, LuarObject $value): void {
@@ -136,7 +135,7 @@ class Scope {
 		$info = [];
 
 		foreach ($this->assigns as $k => $v) {
-			$s = $v instanceof LuarObject ? $v->__toString() : (string) $v;
+			$s = $v instanceof LuarObject ? $v->__toString() : $v;
 			$info[$k] = $s;
 		}
 

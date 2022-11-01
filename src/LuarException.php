@@ -1,5 +1,5 @@
 <?php
-namespace Raudius\Luar\Interpreter;
+namespace Raudius\Luar;
 
 use Exception;
 

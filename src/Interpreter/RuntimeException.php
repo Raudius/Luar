@@ -18,6 +18,10 @@ class RuntimeException extends Exception
 		parent::__construct($message, $code, $previous);
 	}
 
+	public function setContext(RuleContext $context): void {
+		$this->context = $context;
+	}
+
 	public function getContext(): ?RuleContext {
 		return $this->context;
 	}

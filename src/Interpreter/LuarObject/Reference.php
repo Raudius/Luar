@@ -20,7 +20,16 @@ class Reference implements LuarObject {
 	}
 
 	public function getObject(): LuarObject {
-		return $this->parent->get($this->key) ?: new Literal(null);
+		$object = $this->parent;
+		if ($this->parent instanceof Reference) {
+			$object = $this->parent->getObject();
+		}
+
+		if ($object instanceof Scope) {
+			return $object->get($this->key) ?: new Literal(null);
+		}
+
+		throw new RuntimeException('Cannot get property of non-object. ' . $this->key);
 	}
 
 	public function getValue(){
@@ -30,7 +39,7 @@ class Reference implements LuarObject {
 	public function setValue(LuarObject $value): void {
 		$scope = $this->parent;
 		if ($scope instanceof Reference) {
-			$scope = $scope->getValue();
+			$scope = $scope->getObject();
 		}
 
 		if (!$scope instanceof Scope) {

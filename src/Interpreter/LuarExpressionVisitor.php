@@ -1,7 +1,7 @@
 <?php
 namespace Raudius\Luar\Interpreter;
 
-use Antlr\Antlr4\Runtime\Tree\RuleNode;
+use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\Reference;
@@ -10,22 +10,19 @@ use Raudius\Luar\Parser\Context;
 use Raudius\Luar\Parser\Context\ExplistContext;
 
 abstract class LuarExpressionVisitor extends LuarBaseVisitor {
-
-
-	/**
-	 * @return LuarObject[]
-	 */
-	public function visitExplist(ExplistContext $context): array {
+	public function visitExplist(ExplistContext $context): ObjectList {
 		$exps = $context->exp();
+
+		$expressions = [];
 		if (is_array($exps)) {
-			return array_map([$this, 'visitExp'], $exps);
+			$expressions = array_map([$this, 'visitExp'], $exps);
 		}
 
 		if ($exps instanceof ExplistContext) {
-			return [$this->visitExp($exps)];
+			$expressions = [$this->visitExp($exps)];
 		}
 
-		return [];
+		return new ObjectList($expressions);
 	}
 
 	public function visitExpNull(Context\ExpNullContext $context): LuarObject {
@@ -81,8 +78,8 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 	}
 
 	public function visitTableconstructor(Context\TableconstructorContext $context): Table {
-		$fieldList = $this->visitFieldlist($context->fieldlist());
-		return new Table(null, $fieldList);
+		$fieldList = $context->fieldlist() ? $this->visitFieldlist($context->fieldlist()) : [];
+		return Table::fromArray($fieldList);
 	}
 
 	public function visitFieldlist(Context\FieldlistContext $context): array {
@@ -95,8 +92,18 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 		$fields = [];
 		$n = 1;
 		foreach ($fieldContexts as $fieldContext) {
-			[$key, $value] = $this->visitField($fieldContext);
-			$fields[$key ?? $n++] = $value;
+			/** @var LuarObject $object */
+			[$key, $object] = $this->visitField($fieldContext);
+
+			if ($key === null && $object instanceof ObjectList) {
+				$objects = $object->getObjects();
+				foreach ($objects as $object) {
+					$fields[$n++] = $object->getValue();
+				}
+			} else {
+				$key = $key ?? $n++;
+				$fields[$key] = $object->getValue();
+			}
 		}
 
 		return $fields;
@@ -114,8 +121,8 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 			$key = $context->NAME() ? $context->NAME()->getText() : null;
 		}
 
-		$value = $this->visitExp(end($expContexts));
-		return [$key, $value];
+		$object = $this->visitExp(end($expContexts));
+		return [$key, $object];
 	}
 
 	public function visitExpUnary(Context\ExpUnaryContext $context): LuarObject {
@@ -170,9 +177,11 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 		$v1 = $this->visitExp($context->exp(0))->getValue();
 		$v2 = $this->visitExp($context->exp(1))->getValue();
 
-		switch ($context->operatorAddSub()->getText()) {
+		switch ($context->operatorMulDivMod()->getText()) {
 			case '*':  return new Literal($v1 * $v2);
 			case '/':  return new Literal($v1 / $v2);
+			case '%':  return new Literal($v1 % $v2);
+			case '//':  return new Literal(intdiv($v1, $v2));
 		}
 
 		throw new RuntimeException('Could not evaluate the add/sub expression', $context);
@@ -191,14 +200,24 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 
 	public function visitExpOr(Context\ExpOrContext $context): LuarObject {
 		$v1 = $this->visitExp($context->exp(0))->getValue();
+		if ($v1) return new Literal($v1);
 		$v2 = $this->visitExp($context->exp(1))->getValue();
-		return new Literal($v1 || $v2);
+		if ($v2) return new Literal($v2);
+		return new Literal(false);
 	}
 
 	public function visitExpAnd(Context\ExpAndContext $context): LuarObject {
 		$v1 = $this->visitExp($context->exp(0))->getValue();
+		if (!$v1) return new Literal(false);
 		$v2 = $this->visitExp($context->exp(1))->getValue();
-		return new Literal($v1 && $v2);
+		if (!$v2) return new Literal(false);
+		return new Literal(true);
+	}
+
+	public function visitExpConcat(Context\ExpConcatContext $context): LuarObject {
+		$v1 = $this->visitExp($context->exp(0))->getValue();
+		$v2 = $this->visitExp($context->exp(1))->getValue();
+		return new Literal($v1 . $v2);
 	}
 
 	public function visitExpBitwise(Context\ExpBitwiseContext $context): LuarObject {

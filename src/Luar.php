@@ -2,7 +2,6 @@
 namespace Raudius\Luar;
 
 use Raudius\Luar\Interpreter\Interpreter;
-use Raudius\Luar\Interpreter\LuarException;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
@@ -19,16 +18,21 @@ class Luar {
 		$this->interpreter->eval($program);
 	}
 
-	public function assign(string $name, $value): void {
-		if (is_array($value)) {
-			$object = Table::fromArray($value);
-		} elseif(is_callable($value)) {
-			$object = new Invokable($value);
-		} else {
-			$object = new Literal($value);
+	public static function makeLuarObject($value): LuarObject {
+		if ($value instanceof LuarObject) {
+			return $value;
 		}
+		if (is_array($value)) {
+			return Table::fromArray($value);
+		}
+		if(is_callable($value)) {
+			return new Invokable($value);
+		}
+		return new Literal($value);
+	}
 
-		$this->interpreter->getRoot()->assign($name, $object);
+	public function assign(string $name, $value): void {
+		$this->interpreter->getRoot()->assign($name, self::makeLuarObject($value));
 	}
 
 	public function call(string $name, array $args) {
@@ -47,5 +51,9 @@ class Luar {
 			},
 			$this->interpreter->getRoot()->getAssigns()
 		);
+	}
+
+	public function printScope() {
+		var_dump($this->interpreter->getScope());
 	}
 }

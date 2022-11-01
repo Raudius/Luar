@@ -1,19 +1,13 @@
 <?php
 namespace Raudius\Luar\Interpreter\Tokens;
 
-use Raudius\Luar\Interpreter\Interpreter;
-use Raudius\Luar\Interpreter\LuarObject\Invokable;
-use Raudius\Luar\Interpreter\LuarObject\LuarObject;
-use Raudius\Luar\Interpreter\LuarObject\Table;
-use Raudius\Luar\Interpreter\LuarStatementVisitor;
-use Raudius\Luar\Parser\Context\BlockContext;
+use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 
 class NameAndArgs {
 	public ?string $name;
-	/** @var LuarObject[] */
-	public array $args;
+	public ObjectList $args;
 
-	public function __construct(array $args, ?string $name) {
+	public function __construct(ObjectList $args, ?string $name) {
 		$this->name = $name;
 		$this->args = $args;
 	}

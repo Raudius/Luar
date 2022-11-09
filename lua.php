@@ -8,7 +8,7 @@ use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Table;
 use Raudius\Luar\Interpreter\RuntimeException;
 
-ini_set('xdebug.max_nesting_level', 512);
+ini_set('xdebug.max_nesting_level', -1);
 
 /*
 $input = InputStream::fromPath(__DIR__ . '/example.lua');
@@ -103,7 +103,7 @@ $testLuar->assign('isnumber', function ($v) {
 $testLuar->assign('printscope',  function () use ($testLuar) { $testLuar->printScope(); });
 
 try {
-	$testLuar->eval(file_get_contents(__DIR__ . '/vararg.lua'));
+	$testLuar->eval(file_get_contents(__DIR__ . '/locals.lua'));
 } catch (RuntimeException $e) {
 	echo $e->getMessage() . PHP_EOL . PHP_EOL;
 	echo $e->getTraceAsString() . PHP_EOL;

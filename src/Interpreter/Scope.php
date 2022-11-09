@@ -40,19 +40,6 @@ class Scope {
 			: $this->parent->getScope($key);
 	}
 
-	public function gets(array $keys) {
-		$scope = $this;
-
-		foreach ($keys as $key) {
-			if (!$scope instanceof Scope) {
-				return new Literal(null);
-			}
-			$scope = $scope->get($key);
-		}
-
-		return $scope;
-	}
-
 	public function callFunction(string $name, ObjectList $args): LuarObject {
 		$invokable = $this->get($name);
 
@@ -143,5 +130,9 @@ class Scope {
 
 	public function __toString() {
 		return json_encode($this->__debugInfo()) ?: 'Scope';
+	}
+
+	public function isRoot(): bool {
+		return $this->parent === null;
 	}
 }

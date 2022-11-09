@@ -56,6 +56,6 @@ class Luar {
 	}
 
 	public function printScope() {
-		//var_dump($this->interpreter->getScope());
+		var_dump($this->interpreter->getScope());
 	}
 }

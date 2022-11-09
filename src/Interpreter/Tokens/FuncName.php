@@ -15,10 +15,7 @@ class FuncName {
 	}
 
 	public function getChain(): array {
-		$chain = $this->nameChain;
-		array_pop($chain);
-
-		return $chain;
+		return $this->nameChain;
 	}
 
 	public function getName(): string {

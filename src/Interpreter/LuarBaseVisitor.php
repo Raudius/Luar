@@ -226,7 +226,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 					$object = $object->getObject();
 				}
 				if (!$object instanceof Invokable) {
-					throw new RuntimeException('Attempted to call a non-function', $nameAndArgsContext);
+					throw new RuntimeException('Attempted to call a non-function' . get_class($oo) . $oo->getKey(), $nameAndArgsContext);
 				}
 
 				$object = $object->invoke($nameAndArgs->args);

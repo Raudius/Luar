@@ -3,6 +3,7 @@ namespace Raudius\Luar\Interpreter;
 
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
+use Raudius\Luar\Interpreter\LuarObject\Table;
 use Raudius\Luar\Parser\Context;
 
 class LuarStatementVisitor extends LuarExpressionVisitor {
@@ -33,13 +34,26 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		$funcName = $this->visitFuncname($context->funcname());
 		$funcBody = $this->visitFuncbody($context->funcbody());
 
-		$scope = $funcName->isMethod() ?
-			$this->interpreter->getScope()->gets($funcName->getChain())
-			: $this->interpreter->getRoot()->gets($funcName->getChain());
+		$names = $funcName->getChain();
+		$funcName->isMethod() && array_pop($names); // TODO maybe refactor this?
 
-		if (!$scope instanceof Scope) {
-			throw new RuntimeException("Attempted to declare function in non-scopable context." . get_class($scope), $context);
+		$scope = $this->interpreter->getScope();
+		foreach ($names as $name) {
+			$scope = $scope->getScope($name);
+			if ($scope->isRoot()) {
+				break;
+			}
 		}
+
+		if (isset($name) && $funcName->isMethod()) {
+			$scope = $scope->get($name);
+			if (!$scope instanceof Table) {
+				throw new RuntimeException('Attempting to declare method on non-table variable.', $context);
+			}
+		}
+
+		echo "\n\nDeclaring {$funcName->getName()}\n";
+		var_dump($scope);
 
 		$scope->assign($funcName->getName(), $funcBody->asInvokable($this->interpreter, $funcName->isMethod()));
 	}

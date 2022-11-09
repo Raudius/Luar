@@ -94,6 +94,9 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 		foreach ($fieldContexts as $fieldContext) {
 			/** @var LuarObject $object */
 			[$key, $object] = $this->visitField($fieldContext);
+			if ($object instanceof Reference) {
+				$object = $object->getObject();
+			}
 
 			if ($key === null && $object instanceof ObjectList) {
 				$objects = $object->getObjects();
@@ -105,7 +108,6 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 				$fields[$key] = $object->getValue();
 			}
 		}
-
 		return $fields;
 	}
 

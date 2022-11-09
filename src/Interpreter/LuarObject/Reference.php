@@ -5,7 +5,8 @@ use Raudius\Luar\Interpreter\RuntimeException;
 use Raudius\Luar\Interpreter\Scope;
 
 class Reference implements LuarObject {
-	public const VAR_INTERNAL_ELIPSIS = '__internal__';
+	public const VAR_INTERNAL_ELIPSIS = '__elipsis__';
+	public const VAR_INTERNAL_GLOBAL = '_G';
 	private string $key;
 	/** @var Reference|Scope $scope */
 	private $parent;
@@ -29,7 +30,7 @@ class Reference implements LuarObject {
 			return $object->get($this->key) ?: new Literal(null);
 		}
 
-		throw new RuntimeException('Cannot get property of non-object. ' . $this->key);
+		throw new RuntimeException('Cannot get property of non-object. ' . get_class($this->parent));
 	}
 
 	public function getValue(){
@@ -59,5 +60,21 @@ class Reference implements LuarObject {
 
 	public function getKey(): string {
 		return $this->key;
+	}
+
+	public function callMethod(string $name, ObjectList $args): ObjectList {
+		$object = $this->getObject();
+		if (!$object instanceof Table) {
+			throw new RuntimeException("Attempted to call method ($name) on non-object.");
+		}
+
+		$invokable = $object->get($name);
+		if (!$invokable instanceof Invokable) {
+			throw new RuntimeException("Attempted to call method ($name) on an object property.");
+		}
+
+		// FIXME optimise args creation
+		$args = new ObjectList([$object, ...$args->getObjects()]);
+		return $invokable->invoke($args);
 	}
 }

@@ -44,7 +44,7 @@ class Scope {
 		$scope = $this;
 
 		foreach ($keys as $key) {
-			if (!$scope instanceof self) {
+			if (!$scope instanceof Scope) {
 				return new Literal(null);
 			}
 			$scope = $scope->get($key);
@@ -72,7 +72,6 @@ class Scope {
 			throw new RuntimeException('Attempted to call method on non-object.');
 		}
 
-		//array_unshift($args, $this); TODO FIX
 		return $this->callFunction($name, $args);
 	}
 

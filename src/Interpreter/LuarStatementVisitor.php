@@ -2,9 +2,7 @@
 namespace Raudius\Luar\Interpreter;
 
 use Raudius\Luar\Interpreter\LuarObject\Literal;
-use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
-use Raudius\Luar\Interpreter\LuarObject\Reference;
 use Raudius\Luar\Parser\Context;
 
 class LuarStatementVisitor extends LuarExpressionVisitor {
@@ -35,12 +33,15 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		$funcName = $this->visitFuncname($context->funcname());
 		$funcBody = $this->visitFuncbody($context->funcbody());
 
-		$scope = $this->interpreter->getRoot()->gets($funcName->getChain());
+		$scope = $funcName->isMethod() ?
+			$this->interpreter->getScope()->gets($funcName->getChain())
+			: $this->interpreter->getRoot()->gets($funcName->getChain());
+
 		if (!$scope instanceof Scope) {
-			throw new RuntimeException("Attempted to declare function in non-scopable context.", $context);
+			throw new RuntimeException("Attempted to declare function in non-scopable context." . get_class($scope), $context);
 		}
 
-		$scope->assign($funcName->getName(), $funcBody->asInvokable($this->interpreter));
+		$scope->assign($funcName->getName(), $funcBody->asInvokable($this->interpreter, $funcName->isMethod()));
 	}
 
 	public function visitStatLocalFunction(Context\StatLocalFunctionContext $context) {
@@ -55,7 +56,7 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		$explist = $this->visitExplist($context->explist());
 
 		foreach ($varlist as $i => $var) {
-			$exp = $explist->getExpression($i);
+			$exp = $explist->getObject($i);
 			$var->setValue($exp);
 		}
 	}
@@ -65,7 +66,7 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		$explist = $context->explist() ? $this->visitExplist($context->explist()) : new ObjectList([]);
 
 		foreach ($varlist as $i => $var) {
-			$exp = $explist->getExpression($i);
+			$exp = $explist->getObject($i);
 			$var->setValue($exp);
 		}
 	}

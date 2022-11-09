@@ -3,16 +3,16 @@ namespace Raudius\Luar\Interpreter\LuarObject;
 
 class ObjectList implements LuarObject {
 	/** @var LuarObject[] */
-	private array $expressions;
+	private array $objects;
 
 	/** @var null|LuarObject[] */
-	private ?array $expressionsFlattened = null;
+	private ?array $objectsFlattened = null;
 
 	/**
 	 * @param LuarObject[] $expressions
 	 */
 	public function __construct(array $expressions = []) {
-		$this->expressions = $expressions;
+		$this->objects = $expressions;
 	}
 
 	/**
@@ -20,34 +20,69 @@ class ObjectList implements LuarObject {
 	 * @return LuarObject[]
 	 */
 	public function getObjects(): array {
-		if ($this->expressionsFlattened !== null) {
-			return $this->expressionsFlattened;
+		if ($this->objectsFlattened !== null) {
+			return $this->objectsFlattened;
 		}
 
-		$this->expressionsFlattened = [];
+		$this->objectsFlattened = [];
 
-		foreach ($this->expressions as $expression) {
-			if ($expression instanceof ObjectList) {
-				$expression = $expression->getObjects();
-				$this->expressionsFlattened = [...$this->expressionsFlattened, ...$expression];
+		$lastKey = array_key_last($this->objects);
+		foreach ($this->objects as $k => $object) {
+			if ($object instanceof Reference) {
+				$object = $object->getObject();
+			}
+
+			if ($object instanceof ObjectList) {
+				if ($k === $lastKey) {
+					$objects = $object->getObjects();
+
+					$this->objectsFlattened = [...$this->objectsFlattened, ...$objects];
+				} else {
+					$this->objectsFlattened[] = $object->getObject();
+				}
 			} else {
-				$this->expressionsFlattened[] = $expression;
+				$this->objectsFlattened[] = $object;
 			}
 		}
 
-		return $this->expressionsFlattened;
+		return $this->objectsFlattened;
 	}
 
+	/** **/
+	//  TODO: list should return NULL see:
+	//			function f()
+	//			  return 1,2,3
+	//			end
+	//			--
+	//			a = {x= f()}
+	//			--
+	//			local b  = f()
+	//			--
+	//			print(a[x])
+	//			print(b)
+	 /** **/
 	public function getValue() {
-		return $this->getExpression(0)->getValue();
+		return $this->getObject()->getValue();
 	}
 
-	public function getExpression(int $idx): LuarObject {
+	public function getObject(int $idx=0): LuarObject {
 		$objects = $this->getObjects();
 		return $objects[$idx] ?? new Literal(null);
 	}
 
+	public function slice(int $idx): ObjectList {
+		$slice = [];
+		$objects = $this->getObjects();
+
+		$count = count($objects);
+		for (; $idx<$count; $idx++) {
+			$slice[] = $objects[$idx];
+		}
+
+		return new ObjectList($slice);
+	}
+
 	public function __toString(): string{
-		return $this->getValue()->__toString();
+		return 'ObjectList';
 	}
 }

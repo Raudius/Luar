@@ -3,11 +3,10 @@ namespace Raudius\Luar\Interpreter\Tokens;
 
 use Raudius\Luar\Interpreter\Interpreter;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
+use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Reference;
-use Raudius\Luar\Interpreter\LuarObject\Table;
 use Raudius\Luar\Interpreter\LuarStatementVisitor;
 use Raudius\Luar\Interpreter\Scope;
-use Raudius\Luar\Luar;
 use Raudius\Luar\Parser\Context\BlockContext;
 
 class FuncBody {
@@ -20,33 +19,32 @@ class FuncBody {
 	}
 
 
-	public function asInvokable(Interpreter $interpreter): Invokable {
+	public function asInvokable(Interpreter $interpreter, bool $isMethod = false): Invokable {
 		$parameterNames = $this->parameterNames;
 		$parentScope = $interpreter->getScope();
 
-		$function = function (...$args) use ($interpreter, $parentScope, $parameterNames) {
+		if ($isMethod) {
+			array_unshift($parameterNames, 'self');
+		}
+
+		$function = function (ObjectList $arglist) use ($interpreter, $parentScope, $parameterNames) {
 			$currentScope = $interpreter->getScope();
 
 			$scope = new Scope($parentScope);
 			$scope->setExpectedExit(Scope::EXIT_EXPECT_RETURN);
 
-			$isVariadic = end($this->parameterNames) === '...';
+			$isVariadic = end($parameterNames) === '...';
 			$isVariadic && array_pop($parameterNames);
 
-			$extraParams = [];
-			$argc = count($args);
-			for ($i=0; $i<$argc; $i++) {
-				if (isset($parameterNames[$i])) {
-					$scope->assign($parameterNames[$i], Luar::makeLuarObject($args[$i]));
-				} elseif (is_array($args[$i])) {
-					$extraParams = [...$extraParams, ...$args[$i]];
-				} else {
-					$extraParams[] = $args[$i];
-				}
+			$i = 0;
+			foreach ($parameterNames as $parameterName) {
+				$obj = $arglist->getObject($i++);
+				$scope->assign($parameterName, $obj);
 			}
 
 			if ($isVariadic) {
-				$scope->assign(Reference::VAR_INTERNAL_ELIPSIS, Table::fromArray($extraParams));
+				$slice = $arglist->slice($i);
+				$scope->assign(Reference::VAR_INTERNAL_ELIPSIS, $slice);
 			}
 			$return = (new LuarStatementVisitor($interpreter))->visitBlock($this->block, $scope);
 			$interpreter->setScope($currentScope);

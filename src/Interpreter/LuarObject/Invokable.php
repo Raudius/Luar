@@ -1,7 +1,6 @@
 <?php
 namespace Raudius\Luar\Interpreter\LuarObject;
 
-use Raudius\Luar\Interpreter\RuntimeException;
 use Raudius\Luar\Interpreter\Scope;
 
 class Invokable implements LuarObject {
@@ -20,12 +19,7 @@ class Invokable implements LuarObject {
 	}
 
 	public function invoke(ObjectList $args): ObjectList {
-		$argValues = [];
-		foreach ($args->getObjects() as $arg) {
-			$argValues[] = $arg->getValue();
-		}
-
-		$result = ($this->value)(...$argValues);
+		$result = ($this->value)($args);
 
 		if ($result instanceof Scope) { // TODO instanceof Table?
 			$result = $result->getReturn();
@@ -49,5 +43,19 @@ class Invokable implements LuarObject {
 
 	public function __toString(): string{
 		return 'Function';
+	}
+
+	public static function fromPhpCallable(callable $callable): Invokable {
+		$newCallable = static function (ObjectList $objectList) use ($callable) {
+			$args = array_map(
+				static function (LuarObject $object) {
+					return $object->getValue();
+				}, $objectList->getObjects()
+			);
+
+			return $callable(...$args);
+		};
+
+		return new Invokable($newCallable);
 	}
 }

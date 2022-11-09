@@ -3,16 +3,12 @@ namespace Raudius\Luar;
 
 include_once __DIR__ . '/vendor/autoload.php';
 
-use Antlr\Antlr4\Runtime\CommonTokenStream;
-use Antlr\Antlr4\Runtime\Error\Listeners\DiagnosticErrorListener;
-use Antlr\Antlr4\Runtime\InputStream;
-use Raudius\Luar\Interpreter\Interpreter;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
-use Raudius\Luar\Interpreter\LuarStatementVisitor;
+use Raudius\Luar\Interpreter\LuarObject\ObjectList;
+use Raudius\Luar\Interpreter\LuarObject\Table;
 use Raudius\Luar\Interpreter\RuntimeException;
-use Raudius\Luar\Interpreter\Scope;
-use Raudius\Luar\Parser\LuaLexer;
-use Raudius\Luar\Parser\LuaParser;
+
+ini_set('xdebug.max_nesting_level', 512);
 
 /*
 $input = InputStream::fromPath(__DIR__ . '/example.lua');
@@ -42,17 +38,24 @@ echo (json_encode($luar->getGlobals()) ?: 'JSON encode error') . PHP_EOL;
 */
 
 $testLuar = new Luar();
-$testLuar->assign('print', static function ($in) {
-	if (is_array($in)) {
-		$in = json_encode($in) ?: 'Array';
+$testLuar->assign('print', static function (...$ins) {
+	foreach ($ins as $in) {
+		if (is_array($in)) {
+			$in = json_encode($in) ?: 'Array';
+		}
+		if (is_callable($in)) {
+			$in = "Callable";
+		}
+		if (is_null($in)) {
+			$in = 'NULL';
+		}
+
+		echo $in . "\t";
 	}
-	if (is_callable($in)) {
-		$in = "Callable";
-	}
-	echo $in . PHP_EOL;
+	echo PHP_EOL;
 });
-$testLuar->assign('assert', static function ($assertion) {
-	if (!$assertion) {
+$testLuar->assign('assert_php', static function ($assertion) {
+	if ($assertion === false || $assertion === null) {
 		throw new RuntimeException('Assert error');
 	}
 });
@@ -63,13 +66,44 @@ $testLuar->assign('gettype', static function ($o) {
 });
 
 $testLuar->assign('math', [
-	'sin' => function ($n) { return sin($n); }
+	'sin' => function ($n) { return sin($n); },
+	'max' => Invokable::fromPhpCallable(function ($v, ...$vals) {
+		return max($v, ...$vals);
+	})
 ]);
+
+$testLuar->assign('table', [
+	'unpack' => Invokable::fromPhpCallable(function ($t, $i=1, $j=null) {
+		if ($t instanceof ObjectList) {
+			if ($t->getObject(0) instanceof Table) {
+				$t = $t->getObject(0);
+			}
+		}
+
+		if ($t instanceof Table) {
+			$t = $t->getValue();
+		}
+
+		$vals = [];
+
+		// echo PHP_EOL . PHP_EOL . PHP_EOL; var_dump([ 'i' => $i, 'j' => $j ]);
+		while (isset($t[$i]) && ($j === null || $i <= $j)) {
+			$vals[] = Luar::makeLuarObject($t[$i]);
+			$i++;
+		}
+
+		return new ObjectList($vals);
+	}),
+]);
+
+$testLuar->assign('isnumber', function ($v) {
+	return is_numeric($v);
+});
 
 $testLuar->assign('printscope',  function () use ($testLuar) { $testLuar->printScope(); });
 
 try {
-	$testLuar->eval(file_get_contents(__DIR__ . '/closure.lua'));
+	$testLuar->eval(file_get_contents(__DIR__ . '/vararg.lua'));
 } catch (RuntimeException $e) {
 	echo $e->getMessage() . PHP_EOL . PHP_EOL;
 	echo $e->getTraceAsString() . PHP_EOL;
@@ -84,3 +118,7 @@ try {
 }
 
 echo "Done :)\n";
+
+echo "MAX MEMORY USAGE = " . ini_get('memory_limit'). PHP_EOL;
+echo "PEAK MEMORY USAGE = " . memory_get_peak_usage() . PHP_EOL;
+

@@ -26,7 +26,7 @@ class Luar {
 			return Table::fromArray($value);
 		}
 		if(is_callable($value)) {
-			return new Invokable($value);
+			return Invokable::fromPhpCallable($value);
 		}
 		return new Literal($value);
 	}
@@ -35,6 +35,8 @@ class Luar {
 		$this->interpreter->getRoot()->assign($name, self::makeLuarObject($value));
 	}
 
+
+	// TODO fix invoke
 	public function call(string $name, array $args) {
 		$invokable = $this->interpreter->getRoot()->get($name);
 		if (!$invokable instanceof Invokable) {
@@ -54,6 +56,6 @@ class Luar {
 	}
 
 	public function printScope() {
-		var_dump($this->interpreter->getScope());
+		//var_dump($this->interpreter->getScope());
 	}
 }

@@ -8,6 +8,7 @@ use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Reference;
+use Raudius\Luar\Interpreter\LuarObject\Table;
 use Raudius\Luar\Interpreter\Tokens\FuncBody;
 use Raudius\Luar\Interpreter\Tokens\FuncName;
 use Raudius\Luar\Interpreter\Tokens\NameAndArgs;
@@ -113,13 +114,19 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 			throw new RuntimeException('[ERROR INTERNAL] Unknown name variable declaration.', $context);
 		}
 
-		$scope = $this->interpreter->getScope();
-		$scope = $declareLocal ? $scope : $scope->getScope($name);
+
+		if ($name === Reference::VAR_INTERNAL_GLOBAL) {
+			$reference = new Table(null, $this->interpreter->getRoot()->getAssigns());
+		} else {
+			$scope = $this->interpreter->getScope();
+			$scope = $declareLocal ? $scope : $scope->getScope($name);
+			$reference = new Reference($scope, $name);
+		}
 
 		$varSuffixes = $context->varSuffix() ?: [];
 		$varSuffixes = is_array($varSuffixes) ? $varSuffixes : [$varSuffixes];
 
-		return $this->applyVarSuffixes(new Reference($scope, $name), array_map([$this, 'visitVarSuffix'], $varSuffixes));
+		return $this->applyVarSuffixes($reference, array_map([$this, 'visitVarSuffix'], $varSuffixes));
 	}
 
 	public function visitExpVariable(Context\ExpVariableContext $context): LuarObject {
@@ -133,6 +140,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 			throw new RuntimeException('Cannot get properties of non-scopable expression.', $context);
 		}
 
+
 		$varSuffixes = $context->varSuffix() ?: [];
 		$varSuffixes = is_array($varSuffixes) ? $varSuffixes : [$varSuffixes];
 		return $this->applyVarSuffixes($object, array_map([$this, 'visitVarSuffix'], $varSuffixes));
@@ -145,6 +153,10 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 	protected function applyVarSuffixes($variable, array $suffixes): LuarObject {
 		foreach ($suffixes as $suffix) {
 			$obj = $this->applyNameAndArgs($variable, $suffix->nameAndArgs);
+			if ($obj instanceof ObjectList) {
+				$obj = $obj->getObject(0);
+			}
+
 			if (!$obj instanceof Reference && !$obj instanceof Scope) {
 				throw new RuntimeException('Cannot get properties of non-scopable expression.');
 			}
@@ -166,7 +178,6 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 
 		$nameAndArgsContexts = $context->nameAndArgs() ?: [];
 		$nameAndArgsContexts = is_array($nameAndArgsContexts) ? $nameAndArgsContexts : [$nameAndArgsContexts];
-
 
 		return new VarSuffix($nameAndArgsContexts, $suffix);
 	}
@@ -198,8 +209,10 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 		$oo = $object;
 		foreach ($nameAndArgsContexts as $nameAndArgsContext) {
 			$nameAndArgs = $this->visitNameAndArgs($nameAndArgsContext);
+
 			if ($nameAndArgs->name) {
-				if (!$object instanceof Scope) {
+				// FIXME: prevent calling getObject x2 (here + in callMethod)
+				if (!$object instanceof Reference || !($object->getObject()) instanceof Scope) {
 					throw new RuntimeException("Attempted to call method ({$nameAndArgs->name}) on non-object", $nameAndArgsContext);
 				}
 				$object = $object->callMethod($nameAndArgs->name, $nameAndArgs->args);
@@ -208,12 +221,12 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 					$object = $object->getObject();
 				}
 
+				// TODO: check this (dereferencing return list during chained function calls)
 				if ($object instanceof ObjectList) {
-					$object = $object->getExpression(0);
+					$object = $object->getObject();
 				}
-
 				if (!$object instanceof Invokable) {
-					throw new RuntimeException('Attempted to call a non-function ' . $nameAndArgs->name . '  ' . get_class($object) . ' : ' . get_class($oo), $nameAndArgsContext);
+					throw new RuntimeException('Attempted to call a non-function', $nameAndArgsContext);
 				}
 
 				$object = $object->invoke($nameAndArgs->args);
@@ -251,10 +264,6 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 	 */
 	public function evalArgumentedExp(Context\VarOrExpContext $varOrExpContext, $nameAndArgsContexts): LuarObject {
 		$varOrExp = $this->visitVarOrExp($varOrExpContext);
-
-		if ($varOrExp instanceof Reference) {
-			$varOrExp = $varOrExp->getObject();
-		}
 
 		if (!$nameAndArgsContexts) {
 			return $varOrExp;

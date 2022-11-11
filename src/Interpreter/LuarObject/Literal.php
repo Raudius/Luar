@@ -22,4 +22,15 @@ class Literal implements LuarObject {
 
 		return (string) $this->value;
 	}
+
+	public function getType(): string {
+		$phpType = gettype($this->value);
+		switch ($phpType) {
+			case 'NULL': return 'nil';
+			case 'double':
+			case 'integer': return 'number';
+		}
+
+		return $phpType;
+	}
 }

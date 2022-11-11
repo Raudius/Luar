@@ -29,6 +29,10 @@ class Scope {
 		$this->assigns = $assigns;
 	}
 
+	public function has(string $key): bool {
+		return isset($this->assigns[$key]);
+	}
+
 	public function get(string $key): LuarObject {
 		return $this->assigns[$key]
 			?? ($this->parent ? $this->parent->get($key) : new Literal(null));
@@ -38,28 +42,6 @@ class Scope {
 		return (isset($this->assigns[$key]) || !$this->parent)
 			? $this
 			: $this->parent->getScope($key);
-	}
-
-	public function callFunction(string $name, ObjectList $args): LuarObject {
-		$invokable = $this->get($name);
-
-		if ($invokable === null) {
-			throw new RuntimeException('No such function or method: ' . $name);
-		}
-
-		if (!$invokable instanceof Invokable) {
-			throw new RuntimeException('Cannot perform function call on non-invokable object: ' . get_class($invokable));
-		}
-
-		return $invokable->invoke($args);
-	}
-
-	public function callMethod(string $name, ObjectList $args): LuarObject {
-		if (!$this instanceof LuarObject) {
-			throw new RuntimeException('Attempted to call method on non-object.');
-		}
-
-		return $this->callFunction($name, $args);
 	}
 
 	public function setExpectedExit(?int $expectedExit): void{
@@ -101,10 +83,7 @@ class Scope {
 		return $this->parent;
 	}
 
-	public function setParent(Scope $scope): void {
-		$this->parent = $scope;
-	}
-
+	// TODO: remove magic methods
 	public function __set($name, LuarObject $value): void {
 		$this->assigns[$name] = $value;
 	}

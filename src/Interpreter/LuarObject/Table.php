@@ -9,10 +9,6 @@ class Table extends Scope implements LuarObject  {
 		return $this->assigns;
 	}
 
-	public function __toString() {
-		return json_encode($this->__debugInfo()) ?: 'Table';
-	}
-
 	public static function fromArray(array $array): self {
 		return new self(null, self::reindexAndObjectify($array));
 	}
@@ -51,5 +47,13 @@ class Table extends Scope implements LuarObject  {
 		}
 
 		return new Literal($item);
+	}
+
+	public function getType(): string {
+		return 'table';
+	}
+
+	public function __toString() {
+		return sprintf('%s: 0x%06x', $this->getType(), spl_object_id($this));
 	}
 }

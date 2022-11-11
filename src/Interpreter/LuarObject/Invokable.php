@@ -37,13 +37,13 @@ class Invokable implements LuarObject {
 			return new ObjectList( [new Invokable($result)] );
 		}
 
+		if ($result instanceof LuarObject) {
+			return new ObjectList( [$result] );
+		}
+
 		return new ObjectList( [new Literal($result)] );
 	}
 
-
-	public function __toString(): string{
-		return 'Function';
-	}
 
 	public static function fromPhpCallable(callable $callable): Invokable {
 		$newCallable = static function (ObjectList $objectList) use ($callable) {
@@ -57,5 +57,13 @@ class Invokable implements LuarObject {
 		};
 
 		return new Invokable($newCallable);
+	}
+
+	public function getType(): string {
+		return 'function';
+	}
+
+	public function __toString(): string{
+		return sprintf('%s: 0x%06x', $this->getType(), spl_object_id($this));
 	}
 }

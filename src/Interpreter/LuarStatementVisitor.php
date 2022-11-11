@@ -52,9 +52,6 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 			}
 		}
 
-		echo "\n\nDeclaring {$funcName->getName()}\n";
-		var_dump($scope);
-
 		$scope->assign($funcName->getName(), $funcBody->asInvokable($this->interpreter, $funcName->isMethod()));
 	}
 

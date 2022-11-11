@@ -211,7 +211,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 			$nameAndArgs = $this->visitNameAndArgs($nameAndArgsContext);
 
 			if ($nameAndArgs->name) {
-				// FIXME: prevent calling getObject x2 (here + in callMethod)
+				// TODO fix incorrect derefernce? u = {}; x = u; (x and u are same object)
 				if (!$object instanceof Reference || !($object->getObject()) instanceof Scope) {
 					throw new RuntimeException("Attempted to call method ({$nameAndArgs->name}) on non-object", $nameAndArgsContext);
 				}

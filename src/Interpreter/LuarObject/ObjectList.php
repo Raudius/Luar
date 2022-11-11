@@ -16,7 +16,6 @@ class ObjectList implements LuarObject {
 	}
 
 	/**
-	 * TODO: cache result?
 	 * @return LuarObject[]
 	 */
 	public function getObjects(): array {
@@ -84,5 +83,13 @@ class ObjectList implements LuarObject {
 
 	public function __toString(): string{
 		return 'ObjectList';
+	}
+
+	public function getType(): string {
+		return 'list';
+	}
+
+	public function count(): int {
+		return count($this->getObjects());
 	}
 }

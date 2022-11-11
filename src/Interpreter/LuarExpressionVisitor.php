@@ -47,24 +47,27 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 	}
 
 	public function visitExpString(Context\ExpStringContext $context): LuarObject {
+		/** @var Context\StringContext $string */
 		$string = $context->string();
-		if (!$string) {
-			throw new RuntimeException('Could not parse string expression', $context);
-		}
 
 		$singleline = $string->NORMALSTRING() ?? $string->CHARSTRING();
 		if ($singleline) {
-			return new Literal(substr($string->getText(), 1, -1));
+			$str = substr($string->getText(), 1, -1);
+			$str = stripcslashes( $str);
+			return new Literal($str);
 		}
 
 		$offset = 0;
-		foreach (str_split($string->getText()) as $c) {
+		foreach (str_split($string->getText()) as $c) { // TODO: optmisiation? without str_split?
 			if ($c !== '[' && $c !== '=') {
 				break;
 			}
 			$offset++;
 		}
-		return new Literal(substr($string->getText(), $offset, -$offset));
+
+		$str = substr($string->getText(), $offset, -$offset);
+		$str = stripcslashes($str);
+		return new Literal($str);
 	}
 
 

@@ -1,6 +1,7 @@
 <?php
 namespace Raudius\Luar\Interpreter\LuarObject;
 
+use Raudius\Luar\Interpreter\Interpreter;
 use Raudius\Luar\Interpreter\RuntimeException;
 use Raudius\Luar\Interpreter\Scope;
 
@@ -47,6 +48,7 @@ class Reference implements LuarObject {
 			throw new RuntimeException('Cannot assign value to non-object.');
 		}
 
+		// TODO: Remove dereference?
 		if ($value instanceof Reference) {
 			$value = $value->getObject();
 		}
@@ -55,26 +57,31 @@ class Reference implements LuarObject {
 	}
 
 	public function __toString(): string {
-		return "Reference {$this->parent->__toString()}->{$this->key}";
+		return (string) $this->getObject();
 	}
 
 	public function getKey(): string {
 		return $this->key;
 	}
 
-	public function callMethod(string $name, ObjectList $args): ObjectList {
+	public function callMethod(Interpreter $interpreter, string $name, ObjectList $args): ObjectList {
 		$object = $this->getObject();
-		if (!$object instanceof Table) {
-			throw new RuntimeException("Attempted to call method ($name) on non-object.");
+		if ($object instanceof Table && $object->has($name)) {
+			$invokable = $object->get($name);
+		} else {
+			$invokable = $interpreter->getMetaMethod($object->getType(), $name);
 		}
 
-		$invokable = $object->get($name);
 		if (!$invokable instanceof Invokable) {
-			throw new RuntimeException("Attempted to call method ($name) on an object property.");
+			throw new RuntimeException("Attempted to call method ($name).");
 		}
 
 		// FIXME optimise args creation
 		$args = new ObjectList([$object, ...$args->getObjects()]);
 		return $invokable->invoke($args);
+	}
+
+	public function getType(): string {
+		return $this->getObject()->getType();
 	}
 }

@@ -5,6 +5,7 @@ use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\RuntimeException;
+use Throwable;
 
 abstract class Library {
 	/**
@@ -61,5 +62,21 @@ abstract class Library {
 		return Invokable::fromPhpCallable(function () use ($name) {
 			throw new RuntimeException("Unimplemented function in '{$this->getName()}' library: '$name'");
 		});
+	}
+
+	protected function fromPhpFunction(string $function, int $nArgs=null): Invokable {
+		return Invokable::fromPhpCallable(
+			static function (...$args) use ($function, $nArgs) {
+				if ($nArgs !== null) {
+					$args = array_slice($args, 0, $nArgs);
+				}
+
+				try {
+					return $function(...$args);
+				} catch (Throwable $t) {
+					throw new RuntimeException($t->getMessage());
+				}
+			}
+		);
 	}
 }

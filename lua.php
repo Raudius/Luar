@@ -40,37 +40,6 @@ echo (json_encode($luar->getGlobals()) ?: 'JSON encode error') . PHP_EOL;
 $testLuar = new Luar();
 $testLuar->assign('collectgarbage', static function () { });
 
-$testLuar->assign('math', [
-	'sin' => function ($n) { return sin($n); },
-	'max' => Invokable::fromPhpCallable(function ($v, ...$vals) {
-		return max($v, ...$vals);
-	})
-]);
-
-$testLuar->assign('table', [
-	'unpack' => Invokable::fromPhpCallable(function ($t, $i=1, $j=null) {
-		if ($t instanceof ObjectList) {
-			if ($t->getObject(0) instanceof Table) {
-				$t = $t->getObject(0);
-			}
-		}
-
-		if ($t instanceof Table) {
-			$t = $t->getValue();
-		}
-
-		$vals = [];
-
-		// echo PHP_EOL . PHP_EOL . PHP_EOL; var_dump([ 'i' => $i, 'j' => $j ]);
-		while (isset($t[$i]) && ($j === null || $i <= $j)) {
-			$vals[] = Luar::makeLuarObject($t[$i]);
-			$i++;
-		}
-
-		return new ObjectList($vals);
-	}),
-]);
-
 $testLuar->assign('printscope',  function () use ($testLuar) { $testLuar->printScope(); });
 
 try {

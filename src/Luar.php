@@ -6,8 +6,10 @@ use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\Table;
-use Raudius\Luar\Library\Core;
-use Raudius\Luar\Library\Strings;
+use Raudius\Luar\Library\LibCore;
+use Raudius\Luar\Library\LibMath;
+use Raudius\Luar\Library\LibString;
+use Raudius\Luar\Library\LibTable;
 
 class Luar {
 	private Interpreter $interpreter;
@@ -15,8 +17,10 @@ class Luar {
 	public function __construct() {
 		$this->interpreter = new Interpreter();
 
-		$this->interpreter->addCoreLibrary(new Core());
-		$this->interpreter->addLibrary(new Strings());
+		$this->interpreter->addCoreLibrary(new LibCore());
+		$this->interpreter->addLibrary(new LibString());
+		$this->interpreter->addLibrary(new LibTable());
+		$this->interpreter->addLibrary(new LibMath());
 	}
 
 	public function eval(string $program): void {

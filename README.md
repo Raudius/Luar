@@ -10,13 +10,14 @@ Luar implements a reduced version of Lua which also packages some essential Lua 
 
 ## Limitations
 
-Luar does not intend to be a full-replacement for Lua. Matching the exact language spec in PHP is a thankless task as many niche features of Lua are seldom used (particularly when embedded inside PHP).
+Luar does not intend to be a full-replacement for Lua. Matching the exact language spec in PHP is not the intention as many of Lua's more niche features would be largely useless when embedded inside PHP applications.
 
 Not-implemented, not planned:
 * Meta-tables
 * Attributes
 * go-to statements
 * Full implementations of all libraries and functions
+* Locales
 
 
 Also notewothy:

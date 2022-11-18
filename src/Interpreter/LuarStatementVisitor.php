@@ -1,6 +1,8 @@
 <?php
 namespace Raudius\Luar\Interpreter;
 
+use Antlr\Antlr4\Runtime\Tree\TerminalNode;
+use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Table;
@@ -167,6 +169,51 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		}
 	}
 
+	public function visitStatForEach(Context\StatForEachContext $context) {
+		$blockContext = $context->block();
+		$explist = $this->visitExplist($context->explist());
+		$names = $context->namelist()->NAME();
+		$names = is_array($names) ? $names : [$names];
+
+		if (!$explist || !$blockContext || empty($names)) {
+			throw new RuntimeException('[INTERNAL ERROR] Could not parse generic for loop', $context);
+		}
+
+		[$i, $v] = array_map(static function (TerminalNode $node): string {
+			return $node->getText();
+		}, $names);
+
+		$iterator = $explist->getObject(0);
+		$table = $explist->getObject(1);
+		$index = $explist->getObject(2);
+
+		if (!$iterator instanceof Invokable) {
+			throw new RuntimeException('Generic for loop, expects first item in expression list to be an function.');
+		}
+		if (!$table instanceof Table) {
+			throw new RuntimeException('Generic for loop, expects second item in expression list to be a table.');
+		}
+
+		while (
+			($next = $iterator->invoke(new ObjectList([$table, $index])))
+			&& ($index = $next->getObject(0))
+			&& ($value = $next->getObject(1))
+			&& $index->getValue() !== null
+		) {
+			$newScope = new Scope($this->interpreter->getScope());
+			$newScope->setExpectedExit(Scope::EXIT_EXPECT_BREAK_CONTINUE);
+
+			$i && $newScope->assign($i, $index);
+			$v && $newScope->assign($v, $value);
+
+			$scope = $this->visitBlock($blockContext, $newScope);
+			if ($scope->getExit() === Scope::EXIT_BREAK || $scope->getExit() === Scope::EXIT_RETURN) {
+				$scope->resetExit();
+				break;
+			}
+		}
+	}
+
 	public function visitStatRepeat(Context\StatRepeatContext $context) {
 		$expContext = $context->exp();
 		$blockContext = $context->block();
@@ -186,6 +233,5 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 				break;
 			}
 		} while (!$this->visitExp($expContext, $newScope)->getValue());
-
 	}
 }

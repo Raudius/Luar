@@ -4,6 +4,7 @@ namespace Raudius\Luar\Interpreter\LuarObject;
 use Raudius\Luar\Interpreter\Scope;
 
 class Table extends Scope implements LuarObject  {
+	private ?array $keyList = null;
 
 	public function getValue() {
 		return $this->assigns;
@@ -47,6 +48,44 @@ class Table extends Scope implements LuarObject  {
 		}
 
 		return new Literal($item);
+	}
+
+	/**
+	 * Returns the value that comes after the specified key. If key is NULL, the first value is returned.
+	 * @return LuarObject[] [key, value]
+	 */
+	public function next($key): array {
+		$keyList = $this->getKeyList();
+
+		if (isset($keyList[$key])) {
+			$nextKey = $keyList[$key];
+			return [new Literal($nextKey), $this->assigns[$nextKey]];
+		}
+
+		return [new Literal(null), new Literal(null)];
+	}
+
+	public function assign(string $key, LuarObject $value): void {
+		parent::assign($key, $value);
+		$this->keyList = null;
+	}
+
+	/**
+	 * Returns a linked list of the `assigns` array keys.
+	 */
+	private function getKeyList(): array {
+		if ($this->keyList !== null) {
+			return $this->keyList;
+		}
+
+		$this->keyList = [];
+		$prevKey = null;
+		foreach ($this->assigns as $k => $_) {
+			$this->keyList[$prevKey] = $k;
+			$prevKey = $k;
+		}
+
+		return $this->keyList;
 	}
 
 	public function getType(): string {

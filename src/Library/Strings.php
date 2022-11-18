@@ -20,8 +20,12 @@ class Strings extends Library {
 
 	public function getFunctions(): array {
 		return [
-			'char' => $this->char(),
 			'dump' => $this->dump(), // WONTFIX
+			'pack' => $this->pack(), // WONTFIX
+			'packsize' => $this->packSize(), // WONTFIX
+			'unpack' => $this->unpack(), // WONTFIX
+
+			'char' => $this->char(),
 
 			// Also are meta-methods:
 			'byte' => $this->byte(),
@@ -60,8 +64,8 @@ class Strings extends Library {
 
 	private function byte(): Invokable {
 		return new Invokable(function (ObjectList $ol): string {
-			$subject = $this->validateTypeN($ol, 'string', 0); /** @var string $subject */
-			$indices = $this->validateTypes($ol, 'integer', 1); /** @var int[] $indices */
+			$subject = $this->validateTypeN($ol, ['string'], 0); /** @var string $subject */
+			$indices = $this->validateTypes($ol, ['number'], 1); /** @var int[] $indices */
 
 			$bytes = [];
 			$chars = str_split($subject);
@@ -88,10 +92,10 @@ class Strings extends Library {
 
 	public function find(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$subject = $this->validateTypeN($ol, 'string', 0); /** @var string $subject */
-			$pattern = $this->validateTypeN($ol, 'string', 1); /** @var string $pattern */
-			$index = $this->validateTypeN($ol, 'integer', 2, true) ?? 0; /** @var int $index */
-			$plain = $this->validateTypeN($ol, 'boolean', 3, true) ?? false; /** @var boolean $plain */
+			$subject = $this->validateTypeN($ol, ['string'], 0)->getValue(); /** @var string $subject */
+			$pattern = $this->validateTypeN($ol, ['string'], 1)->getValue(); /** @var string $pattern */
+			$index = $this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? 0; /** @var int $index */
+			$plain = $this->validateTypeN($ol, ['boolean','nil'],  3)->getValue() ?? false; /** @var boolean $plain */
 
 			if ($index !== null) {
 				$index = (($index === 0) ? 1 : $index);
@@ -128,9 +132,9 @@ class Strings extends Library {
 
 	public function match(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$subject = $this->validateTypeN($ol, 'string', 0); /** @var string $subject */
-			$pattern = $this->validateTypeN($ol, 'string', 1); /** @var string $pattern */
-			$index = $this->validateTypeN($ol, 'integer', 2, true) ?? 0; /** @var int $index */
+			$subject = $this->validateTypeN($ol, ['string'], 0)->getValue(); /** @var string $subject */
+			$pattern = $this->validateTypeN($ol, ['string'], 1)->getValue(); /** @var string $pattern */
+			$index = $this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? 0; /** @var int $index */
 
 			if ($index !== null) {
 				$index = (($index === 0) ? 1 : $index);
@@ -153,7 +157,7 @@ class Strings extends Library {
 
 	private function format(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$subject = $this->validateTypeN($ol, 'string', 0); /** @var string $subject */
+			$subject = $this->validateTypeN($ol, ['string'], 0)->getValue(); /** @var string $subject */
 			$values = array_map(
 				static function (LuarObject $o) {
 					return $o->getValue();
@@ -196,7 +200,7 @@ class Strings extends Library {
 	private function rep(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
 			$string = (string) $ol->getObject( 0);
-			$times = $this->validateTypeN($ol, 'integer', 1); /** @var int $times */
+			$times = $this->validateTypeN($ol, ['number'], 1)->getValue(); /** @var int $times */
 			$sep = (string) $ol->getObject( 2);
 			if ($times === 0) {
 				return '';
@@ -207,9 +211,9 @@ class Strings extends Library {
 
 	private function sub(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$subject = $this->validateTypeN($ol, 'string', 0); /** @var string $subject */
-			$i = $this->validateTypeN($ol, 'integer', 1); /** @var int $i */
-			$j = $this->validateTypeN($ol, 'integer', 2, true); /** @var int $j */
+			$subject = $this->validateTypeN($ol, ['string'], 0)->getValue(); /** @var string $subject */
+			$i = $this->validateTypeN($ol, ['number'], 1)->getValue(); /** @var int $i */
+			$j = $this->validateTypeN($ol, ['number'], 2)->getValue(); /** @var int $j */
 
 			$i = ($i === 0) ? 1 : $i;
 			$i = ($i < 0) ? strlen($subject) + $i : $i - 1;

@@ -4,6 +4,7 @@ namespace Raudius\Luar\Library;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
+use Raudius\Luar\Interpreter\LuarObject\Table;
 use Raudius\Luar\Interpreter\RuntimeException;
 use Raudius\Luar\Util\PatternHelper;
 
@@ -38,14 +39,11 @@ class Core extends Library {
 
 	private function pcall(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$function = $ol->getObject(0);
+			$function = $this->validateTypeN($ol, ['function'], 0); /** @var Invokable $function */
 			$args = $ol->slice(1);
 
 			$success = true;
 			try {
-				if (!$function instanceof Invokable) {
-					throw new RuntimeException("attempt to call a {$function->getType()} value"); // TODO: move this to LuarObject->invoke() ?
-				}
 				$result = $function->invoke($args);
 			} catch (\Exception $exception) { // TODO: Only catch LuarException?
 				$success = false;
@@ -137,12 +135,41 @@ class Core extends Library {
 		});
 	}
 
+	private function ipairs(): Invokable {
+		return new Invokable(function (ObjectList $ol) {
+			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
+
+			$iterator = new Invokable(function (ObjectList $ol) {
+				$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
+				$index = (int) $this->validateTypeN($ol, ['number'],1)->getValue() + 1; /** @var int $index */
+
+				if ($table->has($index)) {
+					return new ObjectList([
+						new Literal($index),
+						$table->get($index)
+					]);
+				}
+
+				return new ObjectList([new Literal(null), new Literal(null)]);
+			});
+
+			return new ObjectList([ $iterator, $table, new Literal(0) ]);
+		});
+	}
+
+	private function next(): Invokable {
+		return new Invokable(function (ObjectList $ol) {
+			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
+			$prevKey = $ol->getObject(1)->getValue();
+
+			return new ObjectList($table->next($prevKey));
+		});
+	}
+
 	private function pairs(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$i = $ol->getObject();
-			$values = $this->validateTypeN($ol, 'array', 0); /** @var array $values */
-
-			return $this->createIterator($values);
+			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
+			return new ObjectList([$this->next(), $table, new Literal(null)]);
 		});
 	}
 }

@@ -7,7 +7,7 @@ use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Util\PatternHelper;
 
-class Strings extends Library {
+class LibString extends Library {
 	private PatternHelper $patternHelper;
 
 	public function __construct() {

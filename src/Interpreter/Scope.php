@@ -38,6 +38,14 @@ class Scope {
 			?? ($this->parent ? $this->parent->get($key) : new Literal(null));
 	}
 
+	public function assign(string $key, LuarObject $value): void {
+		$this->assigns[$key] = $value;
+	}
+
+	public function remove(string $key): void {
+		unset($this->assigns[$key]);
+	}
+
 	public function getScope(string $key): Scope {
 		return (isset($this->assigns[$key]) || !$this->parent)
 			? $this
@@ -71,29 +79,12 @@ class Scope {
 		return $this->return ?? new Literal(null);
 	}
 
-	public function assign(string $key, LuarObject $value): void {
-		$this->$key = $value;
-	}
-
 	public function getAssigns() {  // todo: delete?
 		return $this->assigns;
 	}
 
 	public function getParent(): ?Scope {
 		return $this->parent;
-	}
-
-	// TODO: remove magic methods
-	public function __set($name, LuarObject $value): void {
-		$this->assigns[$name] = $value;
-	}
-
-	public function __isset($name): bool {
-		return isset($this->assigns[$name]);
-	}
-
-	public function __get($name): ?LuarObject {
-		return $this->$name ?? $this->assigns[$name] ?? null;
 	}
 
 	public function __debugInfo() {

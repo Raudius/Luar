@@ -187,11 +187,11 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		$table = $explist->getObject(1);
 		$index = $explist->getObject(2);
 
-		if (!$iterator instanceof Invokable) {
+		if ($iterator->getType() !== 'function') {
 			throw new RuntimeException('Generic for loop, expects first item in expression list to be an function.');
 		}
-		if (!$table instanceof Table) {
-			throw new RuntimeException('Generic for loop, expects second item in expression list to be a table.');
+		if ($table->getType() !== 'table') {
+			throw new RuntimeException('Generic for loop, expects second item in expression list to be a table. ');
 		}
 
 		while (

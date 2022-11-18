@@ -6,14 +6,8 @@ use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Table;
 use Raudius\Luar\Interpreter\RuntimeException;
-use Raudius\Luar\Util\PatternHelper;
 
-class Core extends Library {
-	public function __construct() {
-		$this->patternHelper = new PatternHelper();
-	}
-
-	public function getName(): string {
+class LibCore extends Library {public function getName(): string {
 		return 'core';
 	}
 
@@ -153,7 +147,7 @@ class Core extends Library {
 				return new ObjectList([new Literal(null), new Literal(null)]);
 			});
 
-			return new ObjectList([ $iterator, $table, new Literal(0) ]);
+			return new ObjectList([$iterator, $table, new Literal(0) ]);
 		});
 	}
 

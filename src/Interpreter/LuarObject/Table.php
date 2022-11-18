@@ -5,8 +5,9 @@ use Raudius\Luar\Interpreter\Scope;
 
 class Table extends Scope implements LuarObject  {
 	private ?array $keyList = null;
+	private ?int $length = null;
 
-	public function getValue() {
+	public function getValue(): array {
 		return $this->assigns;
 	}
 
@@ -68,6 +69,7 @@ class Table extends Scope implements LuarObject  {
 	public function assign(string $key, LuarObject $value): void {
 		parent::assign($key, $value);
 		$this->keyList = null;
+		$this->length = null;
 	}
 
 	/**
@@ -90,6 +92,16 @@ class Table extends Scope implements LuarObject  {
 
 	public function getType(): string {
 		return 'table';
+	}
+
+	public function getLength(): int {
+		if ($this->length !== null) {
+			return $this->length;
+		}
+
+		$this->length = 0;
+		while ($this->has($this->length + 1)) { $this->length++; }
+		return $this->length;
 	}
 
 	public function __toString() {

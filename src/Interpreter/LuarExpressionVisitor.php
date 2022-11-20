@@ -43,26 +43,23 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 		throw new RuntimeException('Could not parse number expression', $context);
 	}
 
-	public function visitExpString(Context\ExpStringContext $context): LuarObject {
-		/** @var Context\StringContext $string */
-		$string = $context->string();
-
-		$singleline = $string->NORMALSTRING() ?? $string->CHARSTRING();
+	public function visitString(Context\StringContext $context): LuarObject {
+		$singleline = $context->NORMALSTRING() ?? $context->CHARSTRING();
 		if ($singleline) {
-			$str = substr($string->getText(), 1, -1);
+			$str = substr($context->getText(), 1, -1);
 			$str = stripcslashes( $str);
 			return new Literal($str);
 		}
 
 		$offset = 0;
-		foreach (str_split($string->getText()) as $c) { // TODO: optmisiation? without str_split?
+		foreach (str_split($context->getText()) as $c) { // TODO: optmisiation? without str_split?
 			if ($c !== '[' && $c !== '=') {
 				break;
 			}
 			$offset++;
 		}
 
-		$str = substr($string->getText(), $offset, -$offset);
+		$str = substr($context->getText(), $offset, -$offset);
 		$str = stripcslashes($str);
 		return new Literal($str);
 	}

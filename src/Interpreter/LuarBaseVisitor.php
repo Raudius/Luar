@@ -216,9 +216,16 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 			return $this->visitExplist($explist);
 		}
 
+		if ($tableContext = $context->tableconstructor()) {
+			$object = $this->visitTableconstructor($tableContext);
+			return new ObjectList([$object]);
+		}
+		if ($strContext = $context->string()) {
+			$object = $this->visitString($strContext);
+			return new ObjectList([$object]);
+		}
+
 		return new ObjectList([]);
-		// TODO fix table / single arguments
-		throw new RuntimeException('[UNIMPLEMENTED] Function calls only possible as expression list');
 	}
 
 	/**

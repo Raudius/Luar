@@ -1,9 +1,8 @@
 <?php
 namespace Raudius\Luar\Interpreter\LuarObject;
 
-use JsonSerializable;
 
-interface LuarObject extends JsonSerializable {
+interface LuarObject  {
 	public function getValue();
 
 	public function getType(): string;

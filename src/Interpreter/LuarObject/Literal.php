@@ -39,8 +39,4 @@ class Literal implements LuarObject {
 
 		return $phpType;
 	}
-
-	public function jsonSerialize() {
-		return $this->getValue();
-	}
 }

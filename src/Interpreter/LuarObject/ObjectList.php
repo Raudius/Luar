@@ -103,8 +103,4 @@ class ObjectList implements LuarObject {
 	public function count(): int {
 		return count($this->getObjects());
 	}
-
-	public function jsonSerialize() {
-		return $this->getObject(0)->jsonSerialize();
-	}
 }

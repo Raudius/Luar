@@ -1,10 +1,11 @@
 <?php
 namespace Raudius\Luar\Interpreter\LuarObject;
 
+use JsonSerializable;
 use Raudius\Luar\Interpreter\Scope;
 use Raudius\Luar\Luar;
 
-class Table extends Scope implements LuarObject  {
+class Table extends Scope implements LuarObject, JsonSerializable  {
 	private ?array $keyList = null;
 	private ?int $length = null;
 	private ?Table $metaTable = null;
@@ -114,7 +115,7 @@ class Table extends Scope implements LuarObject  {
 		return $this->metaTable ?: new Literal(null);
 	}
 
-	public function jsonSerialize() {
+	public function jsonSerialize(): array {
 		return Luar::objectToPhp($this);
 	}
 }

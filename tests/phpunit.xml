@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<phpunit
+    verbose="true"
+    convertDeprecationsToExceptions="true"
+    timeoutForSmallTests="900"
+    timeoutForMediumTests="900"
+    timeoutForLargeTests="900"
+>
+    <testsuite name='Luar App Tests'>
+        <directory suffix='Test.php'>.</directory>
+    </testsuite>
+</phpunit>

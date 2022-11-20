@@ -5,6 +5,7 @@ include_once __DIR__ . '/vendor/autoload.php';
 
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
+use Raudius\Luar\Interpreter\LuarObject\Reference;
 use Raudius\Luar\Interpreter\RuntimeException;
 
 ini_set('xdebug.max_nesting_level', -1);
@@ -15,8 +16,10 @@ $testLuar->assign('printscope',  function () use ($testLuar) { $testLuar->printS
 
 $testLuar->assign('load', new Invokable(function(ObjectList $ol) use ($testLuar) {
 	$program = (string) $ol->getObject(0)->getValue();
-	return Invokable::fromPhpCallable(function () use ($testLuar, $program) {
-		return $testLuar->eval($program);
+	return new Invokable(function (ObjectList $ol) use ($program) {
+		$luar = new Luar();
+		$luar->assign(Reference::VAR_INTERNAL_ELIPSIS, $ol);
+		return $luar->eval($program);
 	});
 }));
 
@@ -25,11 +28,8 @@ $testLuar->assign('_port', true);
 $testLuar->assign('_nomsg', true);
 
 try {
-	$testLuar->eval(file_get_contents(__DIR__ . '/simple.lua'));
-	$testLuar->eval(file_get_contents(__DIR__ . '/vararg.lua'));
-	$testLuar->eval(file_get_contents(__DIR__ . '/closure.lua'));
-	$testLuar->eval(file_get_contents(__DIR__ . '/locals.lua'));
-	$testLuar->eval(file_get_contents(__DIR__ . '/math.lua'));
+	$testLuar->eval(file_get_contents(__DIR__ . '/tests/lua/simple.lua'));
+	$testLuar->eval(file_get_contents(__DIR__ . '/tests/lua/vararg.lua'));
 } catch (RuntimeException $e) {
 	echo $e->getMessage() . PHP_EOL . PHP_EOL;
 	echo $e->getTraceAsString() .PHP_EOL . PHP_EOL;
@@ -38,8 +38,8 @@ try {
 
 
 	foreach ($e->getContextTrace() as $context) {
-		echo "Line: " . $context->getStart()->getLine() . PHP_EOL;
-		echo $context->getText();
+		echo "Line: " . $context['line'] . PHP_EOL;
+		echo $context['code'] . PHP_EOL;
 		echo PHP_EOL;
 	}
 	echo PHP_EOL;

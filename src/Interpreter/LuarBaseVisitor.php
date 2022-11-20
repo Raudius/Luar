@@ -238,22 +238,24 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 			$nameAndArgs = $this->visitNameAndArgs($nameAndArgsContext);
 
 			if ($nameAndArgs->name) {
-				// TODO fix incorrect derefernce? u = {}; x = u; (x and u are same object)
-				if (!$object instanceof Reference || !($object->getObject()) instanceof Scope) {
-					throw new RuntimeException("Attempted to call method ({$nameAndArgs->name}) on non-object", $nameAndArgsContext);
+				$method = $this->interpreter->getMethod($object, $nameAndArgs->name);
+				if (!$method) {
+					throw new RuntimeException("No such method ({$nameAndArgs->name}) for given object");
 				}
-				$object = $object->callMethod($this->interpreter, $nameAndArgs->name, $nameAndArgs->args);
+
+				// FIXME optimise args creation
+				$args = new ObjectList([$object, ...$nameAndArgs->args->getObjects()]);
+				$object = $method->invoke($args);
 			} else {
 				if ($object instanceof Reference) {
 					$object = $object->getObject();
 				}
 
-				// TODO: check this (dereferencing return list during chained function calls)
 				if ($object instanceof ObjectList) {
 					$object = $object->getObject(0);
 				}
 				if (!$object instanceof Invokable) {
-					throw new RuntimeException('Attempted to call a non-function', $nameAndArgsContext);
+					throw new RuntimeException('Attempted to call a non-function ({$nameAndArgs->name})');
 				}
 
 				$object = $object->invoke($nameAndArgs->args);
@@ -300,11 +302,11 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 		return $this->applyNameAndArgs($varOrExp, $nameAndArgsContexts);
 	}
 
-	public function isTrue($value): bool {
+	protected function isTrue($value): bool {
 		return $value !== false && $value !== null;
 	}
 
-	public function mod($num, $mod): Literal {
+	protected function mod($num, $mod): Literal {
 		if (is_float($num) || is_float($mod)) {
 			$result = fmod($mod + fmod($num, $mod), $mod);
 		} else {

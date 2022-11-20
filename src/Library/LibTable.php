@@ -41,6 +41,12 @@ class LibTable extends Library {
 					throw new RuntimeException("table.concat index out of bounds ($i)");
 				}
 
+				$obj = $table->get($i);
+
+				if (!$obj instanceof Literal) {
+					throw new RuntimeException("concat(): disallowed type: {$obj->getType()}");
+				}
+
 				$string .= $table->get($i);
 
 				if ($i !== $end) {

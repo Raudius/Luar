@@ -24,7 +24,7 @@ class Luar {
 	}
 
 	public function eval(string $program) {
-		return $this->interpreter->eval($program);
+		return $this->interpreter->eval($program)->getValue();
 	}
 
 	public static function makeLuarObject($value): LuarObject {
@@ -34,7 +34,7 @@ class Luar {
 		if (is_array($value)) {
 			return Table::fromArray($value);
 		}
-		if(is_callable($value)) {
+		if (is_callable($value)) {
 			return Invokable::fromPhpCallable($value);
 		}
 		return new Literal($value);

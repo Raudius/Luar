@@ -2,16 +2,16 @@
 namespace Raudius\Luar\Interpreter;
 
 use Exception;
-use Antlr\Antlr4\Runtime\RuleContext;
+use Antlr\Antlr4\Runtime\ParserRuleContext;
 
 class RuntimeException extends Exception
 {
-	/** @var RuleContext[] */
+	/** @var ParserRuleContext[] */
 	private array $context;
 
 	public function __construct(
 		string $message,
-		RuleContext $context = null,
+		ParserRuleContext $context = null,
 		int $code = 0,
 		\Throwable $previous = null
 	) {
@@ -23,7 +23,10 @@ class RuntimeException extends Exception
 		return $this->context;
 	}
 
-	public function pushContext(RuleContext $context): void {
-		$this->context[] = $context;
+	public function pushContext(ParserRuleContext $context): void {
+		$this->context[] = [
+			'line' => $context->getStart() ? $context->getStart()->getLine() : -1,
+			'code' => $context->getText()
+		];
 	}
 }

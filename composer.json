@@ -2,8 +2,11 @@
     "name": "raudius/luar",
     "description": "Lua parser for PHP using ANTLR",
     "type": "library",
-    "require-dev": {
+    "require": {
         "antlr/antlr4-php-runtime": "^0.5.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
     },
     "authors": [
         {
@@ -12,7 +15,11 @@
     ],
     "autoload": {
         "psr-4": {
-            "Raudius\\Luar\\": "src"
+            "Raudius\\Luar\\": "src",
+            "Raudius\\Luar\\UnitTests\\": "tests/unit"
         }
+    },
+    "scripts": {
+        "test:unit": "phpunit -c tests/phpunit.xml"
     }
 }

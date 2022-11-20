@@ -1,7 +1,6 @@
 <?php
 namespace Raudius\Luar\Interpreter\LuarObject;
 
-use Raudius\Luar\Interpreter\Interpreter;
 use Raudius\Luar\Interpreter\RuntimeException;
 use Raudius\Luar\Interpreter\Scope;
 
@@ -62,23 +61,6 @@ class Reference implements LuarObject {
 
 	public function getKey(): string {
 		return $this->key;
-	}
-
-	public function callMethod(Interpreter $interpreter, string $name, ObjectList $args): ObjectList {
-		$object = $this->getObject();
-		if ($object instanceof Table && $object->has($name)) {
-			$invokable = $object->get($name);
-		} else {
-			$invokable = $interpreter->getMetaMethod($object->getType(), $name);
-		}
-
-		if (!$invokable instanceof Invokable) {
-			throw new RuntimeException("Attempted to call method ($name).");
-		}
-
-		// FIXME optimise args creation
-		$args = new ObjectList([$object, ...$args->getObjects()]);
-		return $invokable->invoke($args);
 	}
 
 	public function getType(): string {

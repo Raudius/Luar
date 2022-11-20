@@ -6,10 +6,12 @@ use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Table;
+use Raudius\Luar\Interpreter\RuntimeException;
 use Raudius\Luar\Util\PatternHelper;
 
 class LibString extends Library {
 	private PatternHelper $patternHelper;
+	public const MAX_STRLEN_FORMAT = 3200000;
 
 	public function __construct() {
 		$this->patternHelper = new PatternHelper();
@@ -69,6 +71,11 @@ class LibString extends Library {
 			$i = $this->validateTypeN($ol, ['number', 'nil'], 1)->getValue() ?? 1;
 			$j = $this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? $i;
 
+			$i = ($i < 0) ? strlen($subject) + $i + 1 : $i;
+			$i = max($i, 1);
+			$j = ($j < 0) ? strlen($subject) + $j + 1 : $j;
+			$j = min($j, strlen($subject));
+
 			$bytes = [];
 			$chars = str_split($subject);
 			for (; $i<=$j; $i++) {
@@ -85,9 +92,15 @@ class LibString extends Library {
 		return Invokable::fromPhpCallable(static function (...$chars) {
 			$string = '';
 			foreach ($chars as $char) {
-				if (is_numeric($char)) {
-					$string .= chr((int) $char);
+				if (!is_numeric($char)) {
+					continue;
 				}
+
+				$char = $char + 0;
+				if ($char > 255 || $char < 0) {
+					throw new RuntimeException('chr() value out of range');
+				}
+				$string .= chr((int) $char);
 			}
 			return $string;
 		});
@@ -95,10 +108,10 @@ class LibString extends Library {
 
 	public function find(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$subject = $this->validateTypeN($ol, ['string'], 0)->getValue(); /** @var string $subject */
-			$pattern = $this->validateTypeN($ol, ['string'], 1)->getValue(); /** @var string $pattern */
-			$index = $this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? 0; /** @var int $index */
-			$plain = $this->validateTypeN($ol, ['boolean','nil'],  3)->getValue() ?? false; /** @var boolean $plain */
+			$subject = (string) $this->validateTypeN($ol, ['string'], 0)->getValue();
+			$pattern = (string) $this->validateTypeN($ol, ['string'], 1)->getValue();
+			$index = $this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? 0;
+			$plain = $this->validateTypeN($ol, ['boolean', 'number','nil'],  3)->getValue() ?: false;
 
 			if ($index !== null) {
 				$index = (($index === 0) ? 1 : $index);
@@ -110,7 +123,7 @@ class LibString extends Library {
 				$matches = $this->patternHelper->matchPattern($subject, $pattern, $index);
 
 				if (isset($matches[0])) {
-					$start = $matches[0][1] + $index + 1;
+					$start = $matches[0][1] + 1;
 					$end = $start + strlen($matches[0][0]) - 1;
 					$return = [new Literal($start), new Literal($end)];
 
@@ -123,11 +136,15 @@ class LibString extends Library {
 			} else {
 				$start = strpos($subject, $pattern, $index);
 				if ($start !== false) {
+					++$start;
 					$end = $start + strlen($pattern) - 1;
 					$return = [new Literal($start), new Literal($end)];
 				}
 			}
 
+			if ($return === []) {
+				$return[] = new Literal(null);
+			}
 			return new ObjectList($return);
 		});
 	}
@@ -163,14 +180,24 @@ class LibString extends Library {
 			$subject = $this->validateTypeN($ol, ['string'], 0)->getValue(); /** @var string $subject */
 			$values = array_map(
 				static function (LuarObject $o) {
-					return $o->getValue();
+					$value = $o->getValue();
+					if ($value === true) {
+						return 'true';
+					}
+					if ($value === false) {
+						return 'false';
+					}
+					return $value ?? 'nil';
 				}, $ol->slice(1)->getObjects()
 			);
 
-			str_replace('%i', '%d', $subject);
-			str_replace('%f', '%F', $subject);
-			str_replace('%%', '%%', $subject);
-			// NOTE: %q unimplemented
+			// FIXME: embedded zeros not allowed for arguments with modifiers (e.g. %10f)
+			// FIXME: %q does not escape characters
+			$subject = str_replace(
+				['%i', '%f', '%q', '%%', '%a', '%A'],
+				['%d', '%F', '%s', '%%', '%%', '%%'],
+				$subject
+			);
 
 			return sprintf($subject, ...$values);
 		});
@@ -205,31 +232,38 @@ class LibString extends Library {
 			$string = (string) $this->validateTypeN($ol, ['string'], 0)->getValue();
 			$times = (int) $this->validateTypeN($ol, ['number'], 1)->getValue();
 			$sep = $this->validateTypeN($ol, ['string', 'nil'], 2)->getValue() ?? '';
-			if ($times === 0) {
+
+			$len = strlen($string) + strlen($sep);
+			if ($times === 0 || $len === 0) {
 				return '';
 			}
+
+			$max_reps = static::MAX_STRLEN_FORMAT / $len;
+			if ($times > $max_reps) {
+				throw new RuntimeException('rep(): resulting string too large');
+			}
+
 			return str_repeat($string . $sep, $times-1) . $string ;
 		});
 	}
 
 	private function sub(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$subject = $this->validateTypeN($ol, ['string'], 0)->getValue(); /** @var string $subject */
-			$i = $this->validateTypeN($ol, ['number'], 1)->getValue(); /** @var int $i */
-			$j = $this->validateTypeN($ol, ['number'], 2)->getValue(); /** @var int $j */
+			$subject = (string) $this->validateTypeN($ol, ['string'], 0)->getValue();
+			$i = (int) $this->validateTypeN($ol, ['number'], 1)->getValue();
+			$j = $this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? -1;
 
-			$i = ($i === 0) ? 1 : $i;
-			$i = ($i < 0) ? strlen($subject) + $i : $i - 1;
+			$i = ($i < 0) ? strlen($subject) + $i + 1 : $i;
+			$i = max($i, 1);
+			$j = ($j < 0) ? strlen($subject) + $j + 1 : $j;
+			$j = min($j, strlen($subject));
 
-			$len = null;
-			if ($j !== null) {
-				$j = ($j === 0) ? 1 : $j;
-				$j = ($j < 0) ? strlen($subject) + $j : $j - 1;
-
-				$len = max(0, $j-$i + 1);
+			if ($i > $j) {
+				return '';
 			}
 
-			return substr($subject, $i, $len) ?: '';
+			$len = $j - $i + 1;
+			return substr($subject, $i-1, $len) ?: '';
 		});
 	}
 

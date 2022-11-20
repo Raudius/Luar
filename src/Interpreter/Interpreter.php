@@ -5,6 +5,8 @@ use Antlr\Antlr4\Runtime\CommonTokenStream;
 use Antlr\Antlr4\Runtime\Error\Listeners\DiagnosticErrorListener;
 use Antlr\Antlr4\Runtime\InputStream;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
+use Raudius\Luar\Interpreter\LuarObject\LuarObject;
+use Raudius\Luar\Interpreter\LuarObject\Reference;
 use Raudius\Luar\Interpreter\LuarObject\Table;
 use Raudius\Luar\Library\Library;
 use Raudius\Luar\Parser\LuaLexer;
@@ -74,5 +76,16 @@ final class Interpreter {
 
 	public function getMetaMethod(string $type, string $method): ?Invokable {
 		return ($this->metaMethods[$type] ?? [])[$method] ?? null;
+	}
+
+	public function getMethod(LuarObject $object, string $name): ?Invokable {
+		if ($object instanceof Reference) {
+			$object = $object->getObject();
+		}
+		if ($object instanceof Table && $object->has($name)) {
+			$invokable = $object->get($name);
+			return $invokable instanceof Invokable ? $invokable : null;
+		}
+		return $this->getMetaMethod($object->getType(), $name);
 	}
 }

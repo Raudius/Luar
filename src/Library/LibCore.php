@@ -40,7 +40,7 @@ class LibCore extends Library {public function getName(): string {
 
 			$success = true;
 			try {
-				$result = $function->invoke($args);
+				$result = $function->invoke($args)->getValue();
 			} catch (\Throwable $exception) { // TODO: Only catch LuarException?
 				$success = false;
 				$result = $exception->getMessage();
@@ -71,7 +71,8 @@ class LibCore extends Library {public function getName(): string {
 
 	private function assert(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			if (!$ol->getObject(0)->getValue()) {
+			$r = $ol->getObject(0)->getValue();
+			if ($r === false || $r === null) {
 				$message = (string) ($ol->getRawObject(1)->getValue() ?? 'assertion failed');
 				$this->error()->invoke(new ObjectList([new Literal($message)]));
 			}
@@ -84,7 +85,6 @@ class LibCore extends Library {public function getName(): string {
 	private function tonumber(): Invokable {
 		return Invokable::fromPhpCallable(static function ($value, $base = null) {
 			if (is_string($value) && preg_match('/^[ \\t\\n]*[+-]?[a-zA-Z0-9+-]*(\\.[a-zA-Z0-9+-]*)?[ \\t\\n]*$/', $value) !== 1) {
-				var_dump($value);
 				return null;
 			}
 
@@ -149,22 +149,22 @@ class LibCore extends Library {public function getName(): string {
 
 	private function select(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$index = $ol->getObject( 0)->getValue();
+			$i = $ol->getObject( 0)->getValue();
 			$items = $ol->slice(1);
 			$len = $items->count();
 
-			if ($index === '#') {
+			if ($i === '#') {
 				return new ObjectList([ new Literal($len) ]);
 			}
 
-			if (!is_numeric($index)) {
+			if (!is_numeric($i)) {
 				throw new RuntimeException("select index argument expects '#' or number");
 			}
 
-			$index = (int) $index;
-			$index = ($index < 0) ? $len - $index + 1: $index;
-			if ($index === 0 || $index > $len) {
-				throw new RuntimeException("select index out of range");
+			$index = (int) $i;
+			$index = ($index < 0) ? $len + $index + 1: $index;
+			if ($index <= 0) {
+				throw new RuntimeException("select index out of range ($index) len=$len");
 			}
 
 			return $items->slice($index-1);

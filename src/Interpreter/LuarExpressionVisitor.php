@@ -47,19 +47,34 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 		$singleline = $context->NORMALSTRING() ?? $context->CHARSTRING();
 		if ($singleline) {
 			$str = substr($context->getText(), 1, -1);
-			$str = stripcslashes( $str);
-			return new Literal($str);
-		}
-
-		$offset = 0;
-		foreach (str_split($context->getText()) as $c) { // TODO: optmisiation? without str_split?
-			if ($c !== '[' && $c !== '=') {
-				break;
+		} else {
+			$offset = 0;
+			foreach (str_split($context->getText()) as $c) { // TODO: optmisiation? without str_split?
+				if ($c !== '[' && $c !== '=') {
+					break;
+				}
+				$offset++;
 			}
-			$offset++;
+			$str = substr($context->getText(), $offset, -$offset);
 		}
 
-		$str = substr($context->getText(), $offset, -$offset);
+		preg_match_all('/\\\\(\\d{1,3})/', $str, $matches, PREG_OFFSET_CAPTURE);
+		$offset = -1; // -1 to account for backslash
+
+		foreach ($matches[1] as $match) {
+			$start = $match[1] + $offset;
+			$len = strlen($match[0]) + 1; // +1 to account for backslash, outside of capture
+
+			$chr = $match[0] + 0;
+			if (!is_numeric($match[0]) || $chr > 255) {
+				throw new RuntimeException('Unknown escape character');
+			}
+
+			$char = chr($chr);
+			$str = substr_replace($str, $char, $start, $len);
+			$offset -= $len - 1; // -1 because 1 is the length of $char
+		}
+
 		$str = stripcslashes($str);
 		return new Literal($str);
 	}

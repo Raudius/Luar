@@ -2,6 +2,7 @@
 namespace Raudius\Luar\Interpreter\LuarObject;
 
 use Raudius\Luar\Interpreter\Scope;
+use Raudius\Luar\Luar;
 
 class Table extends Scope implements LuarObject  {
 	private ?array $keyList = null;
@@ -28,28 +29,12 @@ class Table extends Scope implements LuarObject  {
 
 		foreach ($array as $key => $item) {
 			if (!$item instanceof LuarObject) {
-				$item = self::objectify($item);
+				$item = Luar::makeLuarObject($item);
 			}
 
 			$array[$key] = $item;
 		}
-
 		return $array;
-	}
-
-	/**
-	 * TODO: move this function elswehere
-	 */
-	private static function objectify($item): LuarObject {
-		if (is_array($item)) {
-			return self::fromArray($item);
-		}
-
-		if (is_callable($item)) {
-			return new Invokable($item);
-		}
-
-		return new Literal($item);
 	}
 
 	/**

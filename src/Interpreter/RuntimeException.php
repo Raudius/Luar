@@ -15,7 +15,7 @@ class RuntimeException extends Exception
 		int $code = 0,
 		\Throwable $previous = null
 	) {
-		$this->context = $context ? [$context] : [];
+		$context && $this->pushContext($context);
 		parent::__construct($message, $code, $previous);
 	}
 

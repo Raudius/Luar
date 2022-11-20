@@ -21,24 +21,24 @@ class Invokable implements LuarObject {
 	public function invoke(ObjectList $args): ObjectList {
 		$result = ($this->value)($args);
 
-		if ($result instanceof Scope) { // TODO instanceof Table?
-			$result = $result->getReturn();
-		}
-
 		if ($result instanceof ObjectList) {
 			return $result;
 		}
 
+		if ($result instanceof LuarObject) {
+			return new ObjectList( [$result] );
+		}
+
+		if ($result instanceof Scope) {
+			$result = $result->getReturn();
+		}
+
 		if (is_array($result)) {
-			return new ObjectList( [new Table(null, $result)] );
+			return new ObjectList( [Table::fromArray($result)] );
 		}
 
 		if (is_callable($result)) {
 			return new ObjectList( [new Invokable($result)] );
-		}
-
-		if ($result instanceof LuarObject) {
-			return new ObjectList( [$result] );
 		}
 
 		return new ObjectList( [new Literal($result)] );

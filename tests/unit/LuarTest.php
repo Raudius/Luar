@@ -4,7 +4,6 @@ namespace Raudius\Luar\UnitTests;
 use PHPUnit\Framework\TestCase;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
-use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Luar;
 

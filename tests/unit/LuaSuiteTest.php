@@ -11,7 +11,7 @@ use Raudius\Luar\Luar;
  * Tests the interpreter by running files from the Lua test suite.
  * Assertions are already performed inside the Lua program, which will throw an exception if failed.
  */
-class LuaTest extends TestCase {
+class LuaSuiteTest extends TestCase {
 	private function testLua(string $program): void {
 		$successReturn = "Luar OK!";
 		$program .= "\nreturn '$successReturn'";
@@ -19,7 +19,7 @@ class LuaTest extends TestCase {
 		ini_set('xdebug.max_nesting_level', -1);
 		$testLuar = new Luar();
 		$testLuar->assign('collectgarbage', static function () { });
-		$testLuar->assign('load', new Invokable(function(ObjectList $ol) use ($testLuar) {
+		$testLuar->assign('load', new Invokable(function(ObjectList $ol) {
 			$program = (string) $ol->getObject(0)->getValue();
 			return new Invokable(function (ObjectList $ol) use ($program) {
 				$luar = new Luar();
@@ -35,23 +35,23 @@ class LuaTest extends TestCase {
 		$this->assertEquals($successReturn, $testLuar->eval($program));
 	}
 
-	public function testMath() {
+	public function testMath(): void {
 		$this->testLua(file_get_contents(__DIR__ . '/../lua/math.lua'));
 	}
 
-	public function testStrings() {
+	public function testStrings(): void {
 		$this->testLua(file_get_contents(__DIR__ . '/../lua/strings.lua'));
 	}
 
-	public function testVararg() {
+	public function testVararg(): void {
 		$this->testLua(file_get_contents(__DIR__ . '/../lua/vararg.lua'));
 	}
 
-	public function testClosure() {
+	public function testClosure(): void {
 		$this->testLua(file_get_contents(__DIR__ . '/../lua/closure.lua'));
 	}
 
-	public function testLocals() {
+	public function testLocals(): void {
 		$this->testLua(file_get_contents(__DIR__ . '/../lua/locals.lua'));
 	}
 }

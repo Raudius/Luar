@@ -5,9 +5,11 @@ use Raudius\Luar\Interpreter\Interpreter;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
+use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Table;
 use Raudius\Luar\Library\LibCore;
 use Raudius\Luar\Library\LibMath;
+use Raudius\Luar\Library\Library;
 use Raudius\Luar\Library\LibString;
 use Raudius\Luar\Library\LibTable;
 
@@ -17,10 +19,10 @@ class Luar {
 	public function __construct() {
 		$this->interpreter = new Interpreter();
 
-		$this->interpreter->addCoreLibrary(new LibCore());
-		$this->interpreter->addLibrary(new LibString());
-		$this->interpreter->addLibrary(new LibTable());
-		$this->interpreter->addLibrary(new LibMath());
+		$this->addCoreLibrary(new LibCore());
+		$this->addLibrary(new LibString());
+		$this->addLibrary(new LibTable());
+		$this->addLibrary(new LibMath());
 	}
 
 	public function eval(string $program) {
@@ -44,27 +46,40 @@ class Luar {
 		$this->interpreter->getRoot()->assign($name, self::makeLuarObject($value));
 	}
 
-
-	// TODO fix invoke
 	public function call(string $name, array $args) {
 		$invokable = $this->interpreter->getRoot()->get($name);
 		if (!$invokable instanceof Invokable) {
 			throw new LuarException('Could not call non-invokable object');
 		}
 
-		$invokable->invoke($args);
+		$args = array_map(static function ($arg): LuarObject {
+			return self::makeLuarObject($arg);
+		}, $args);
+
+		return $invokable->invoke(new ObjectList($args))->getValue();
 	}
 
 	public function getGlobals(): array {
-		return array_map(
-			static function (LuarObject $luarObject) {
-				return $luarObject->getValue();
-			},
-			$this->interpreter->getRoot()->getAssigns()
-		);
+		$globals = [];
+		foreach ($this->interpreter->getRoot()->getAssigns() as $k => $o) {
+			$globals[$k] = $o->getValue();
+		}
+
+		return $globals;
 	}
 
-	public function printScope() {
-		var_dump($this->interpreter->getScope());
+	public function addLibrary(Library $library): void {
+		$functions = new Table(null, $library->getFunctions());
+		$this->interpreter->getRoot()->assign($library->getName(), $functions);
+		$this->interpreter->setMetaMethods(array_merge_recursive($this->interpreter->getMetaMethods(), $library->getMetaMethods()));
+	}
+
+	/**
+	 * Core library functions get added directly to the root scope. No meta-methods are expected.
+	 */
+	public function addCoreLibrary(Library $library): void {
+		foreach ($library->getFunctions() as $name => $func) {
+			$this->interpreter->getRoot()->assign($name, $func);
+		}
 	}
 }

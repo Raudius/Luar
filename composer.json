@@ -2,6 +2,7 @@
     "name": "raudius/luar",
     "description": "Lua parser for PHP using ANTLR",
     "type": "library",
+    "version": "0.0.1",
     "require": {
         "antlr/antlr4-php-runtime": "^0.5.1"
     },

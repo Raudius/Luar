@@ -12,7 +12,6 @@ ini_set('xdebug.max_nesting_level', -1);
 
 $testLuar = new Luar();
 $testLuar->assign('collectgarbage', static function () { });
-$testLuar->assign('printscope',  function () use ($testLuar) { $testLuar->printScope(); });
 
 $testLuar->assign('load', new Invokable(function(ObjectList $ol) use ($testLuar) {
 	$program = (string) $ol->getObject(0)->getValue();

@@ -88,4 +88,12 @@ final class Interpreter {
 		}
 		return $this->getMetaMethod($object->getType(), $name);
 	}
+
+	public function setMetaMethods(array $metaMethods): void {
+		$this->metaMethods = $metaMethods;
+	}
+
+	public function getMetaMethods(): array {
+		return $this->metaMethods;
+	}
 }

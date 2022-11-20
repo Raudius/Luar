@@ -26,7 +26,7 @@ class Luar {
 	}
 
 	public function eval(string $program) {
-		return static::objectToPhp($this->interpreter->eval($program)->getValue());
+		return static::objectToPhp($this->interpreter->eval($program));
 	}
 
 	public static function objectToPhp(LuarObject $object) {

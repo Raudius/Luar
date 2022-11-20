@@ -113,4 +113,8 @@ class Table extends Scope implements LuarObject  {
 	public function getMetaTable(): LuarObject {
 		return $this->metaTable ?: new Literal(null);
 	}
+
+	public function jsonSerialize() {
+		return Luar::objectToPhp($this);
+	}
 }

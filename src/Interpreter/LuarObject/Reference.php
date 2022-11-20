@@ -66,4 +66,8 @@ class Reference implements LuarObject {
 	public function getType(): string {
 		return $this->getObject()->getType();
 	}
+
+	public function jsonSerialize() {
+		return $this->getObject()->jsonSerialize();
+	}
 }

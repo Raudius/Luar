@@ -66,4 +66,8 @@ class Invokable implements LuarObject {
 	public function __toString(): string{
 		return sprintf('%s: 0x%06x', $this->getType(), spl_object_id($this));
 	}
+
+	public function jsonSerialize() {
+		return (string) $this;
+	}
 }

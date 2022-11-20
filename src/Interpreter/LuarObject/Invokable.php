@@ -68,6 +68,6 @@ class Invokable implements LuarObject {
 	}
 
 	public function jsonSerialize() {
-		return (string) $this;
+		return $this->__toString();
 	}
 }

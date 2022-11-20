@@ -46,11 +46,13 @@ class Luar {
 		if ($value instanceof LuarObject) {
 			return $value;
 		}
+
+		if (!is_string($value) && is_callable($value)) {
+			return Invokable::fromPhpCallable($value);
+		}
+
 		if (is_array($value)) {
 			return Table::fromArray($value);
-		}
-		if (is_callable($value)) {
-			return Invokable::fromPhpCallable($value);
 		}
 		return new Literal($value);
 	}

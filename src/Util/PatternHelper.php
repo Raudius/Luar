@@ -7,7 +7,6 @@ class PatternHelper {
 	public function matchPattern(string $subject, string $pattern, int $offset): array {
 		$regex = $this->patternToRegex($pattern);
 
-		echo "Matching\nregex=$regex\nsubject=$subject\noffset=$offset\n\n";
 		preg_match($regex, $subject, $matches, PREG_OFFSET_CAPTURE, $offset);
 		return $matches;
 	}

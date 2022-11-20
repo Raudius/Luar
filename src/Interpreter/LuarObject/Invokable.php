@@ -2,6 +2,7 @@
 namespace Raudius\Luar\Interpreter\LuarObject;
 
 use Raudius\Luar\Interpreter\Scope;
+use Raudius\Luar\Luar;
 
 class Invokable implements LuarObject {
 	/** @var callable $value */
@@ -49,7 +50,7 @@ class Invokable implements LuarObject {
 		$newCallable = static function (ObjectList $objectList) use ($callable) {
 			$args = array_map(
 				static function (LuarObject $object) {
-					return $object->getValue();
+					return Luar::objectToPhp($object);
 				}, $objectList->getObjects()
 			);
 

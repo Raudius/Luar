@@ -31,7 +31,7 @@ class PatternHelper {
 				if ($char === '^' && $i > 0 && $patternChars[$i-1] === '[') {
 					$r = "\\^";
 				} elseif ($char === '$' && ($i+1) === $count) {
-					$r = "\\$";
+					$r = "$";
 				}
 
 				$r = $r ?? $this->escapeCharRegex($char);

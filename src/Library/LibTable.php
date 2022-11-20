@@ -119,9 +119,8 @@ class LibTable extends Library {
 			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
 			$length = $table->getLength();
 
-			$start = (int) ($this->validateType($ol, ['number', 'nil'], 1) ?? 1);
-			$end = (int) ($this->validateType($ol, ['number', 'nil'], 1) ?? $length);
-
+			$start = (int) ($this->validateTypeN($ol, ['number', 'nil'], 1)->getValue() ?? 1);
+			$end = (int) ($this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? $length);
 
 			$objects = [];
 			for ($i=$start; $i<=$end; $i++) {

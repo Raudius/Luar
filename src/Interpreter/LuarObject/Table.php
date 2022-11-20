@@ -6,6 +6,7 @@ use Raudius\Luar\Interpreter\Scope;
 class Table extends Scope implements LuarObject  {
 	private ?array $keyList = null;
 	private ?int $length = null;
+	private ?Table $metaTable = null;
 
 	public function getValue(): array {
 		return $this->assigns;
@@ -66,6 +67,15 @@ class Table extends Scope implements LuarObject  {
 		return [new Literal(null), new Literal(null)];
 	}
 
+	public function get(string $key): LuarObject {
+		if ($this->has($key)) {
+			return parent::get($key);
+		}
+		return $this->metaTable
+			? $this->metaTable->get($key)
+			: new Literal(null);
+	}
+
 	public function assign(string $key, LuarObject $value): void {
 		parent::assign($key, $value);
 		$this->keyList = null;
@@ -106,5 +116,13 @@ class Table extends Scope implements LuarObject  {
 
 	public function __toString() {
 		return sprintf('%s: 0x%06x', $this->getType(), spl_object_id($this));
+	}
+
+	public function setMetaTable(?Table $table): void {
+		$this->metaTable = $table;
+	}
+
+	public function getMetaTable(): LuarObject {
+		return $this->metaTable ?: new Literal(null);
 	}
 }

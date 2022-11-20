@@ -145,10 +145,10 @@ exp
     | exp operatorMulDivMod exp				# expMulDivMod
     | exp operatorAddSub exp				# expAddSub
     | <assoc=right> exp operatorStrcat exp	# expConcat
+    | exp operatorBitwise exp				# expBitwise
     | exp operatorComparison exp			# expComparison
     | exp operatorAnd exp					# expAnd
     | exp operatorOr exp					# expOr
-    | exp operatorBitwise exp				# expBitwise
     ;
 
 prefixexp

@@ -246,16 +246,6 @@ interface LuaVisitor extends ParseTreeVisitor
 	public function visitExpComparison(Context\ExpComparisonContext $context);
 
 	/**
-	 * Visit a parse tree produced by the `expOr` labeled alternative
-	 * in {@see LuaParser::exp()}.
-	 *
-	 * @param Context\ExpOrContext $context The parse tree.
-	 *
-	 * @return mixed The visitor result.
-	 */
-	public function visitExpOr(Context\ExpOrContext $context);
-
-	/**
 	 * Visit a parse tree produced by the `expBitwise` labeled alternative
 	 * in {@see LuaParser::exp()}.
 	 *
@@ -264,6 +254,16 @@ interface LuaVisitor extends ParseTreeVisitor
 	 * @return mixed The visitor result.
 	 */
 	public function visitExpBitwise(Context\ExpBitwiseContext $context);
+
+	/**
+	 * Visit a parse tree produced by the `expOr` labeled alternative
+	 * in {@see LuaParser::exp()}.
+	 *
+	 * @param Context\ExpOrContext $context The parse tree.
+	 *
+	 * @return mixed The visitor result.
+	 */
+	public function visitExpOr(Context\ExpOrContext $context);
 
 	/**
 	 * Visit a parse tree produced by the `expMulDivMod` labeled alternative

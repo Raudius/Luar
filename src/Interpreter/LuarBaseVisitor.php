@@ -2,9 +2,11 @@
 namespace Raudius\Luar\Interpreter;
 
 use Antlr\Antlr4\Runtime\RuleContext;
+use Antlr\Antlr4\Runtime\Tree\ParseTree;
 use Antlr\Antlr4\Runtime\Tree\RuleNode;
 use Antlr\Antlr4\Runtime\Tree\TerminalNode;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
+use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Reference;
@@ -26,7 +28,26 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 	public function visitBlock(Context\BlockContext $context, Scope $scopeToPush = null): Scope {
 		$this->interpreter->pushScope($scopeToPush);
 
-		parent::visitBlock($context);
+		$child = null;
+		$n = $context->getChildCount();
+		try {
+			for ($i=0; $i < $n; $i++) {
+				if (!$this->shouldVisitNextChild($context, null)) {
+					break;
+				}
+
+				/** @var ParseTree $child */
+				$child = $context->getChild($i);
+				$this->visit($child);
+			}
+		} catch (RuntimeException $e) {
+			if ($child instanceof Context\StatContext) {
+				$e->pushContext($child);
+			}
+			throw $e;
+		} catch (\Throwable $e) {
+			throw new RuntimeException($e->getMessage(), $child, 0, $e);
+		}
 
 		return $this->interpreter->popScope();
 	}
@@ -42,7 +63,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 			return $result;
 		}
 
-		throw new RuntimeException("Expression did not resolve to LuarObject.", $context);
+		throw new RuntimeException("[INTERNAL ERROR]: Expression did not resolve to LuarObject.", $context);
 	}
 
 	public function visitFuncname(Context\FuncnameContext $context): FuncName {
@@ -206,7 +227,6 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 	 * @return LuarObject
 	 */
 	public function applyNameAndArgs($object, array $nameAndArgsContexts): LuarObject {
-		$oo = $object;
 		foreach ($nameAndArgsContexts as $nameAndArgsContext) {
 			$nameAndArgs = $this->visitNameAndArgs($nameAndArgsContext);
 
@@ -215,7 +235,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 				if (!$object instanceof Reference || !($object->getObject()) instanceof Scope) {
 					throw new RuntimeException("Attempted to call method ({$nameAndArgs->name}) on non-object", $nameAndArgsContext);
 				}
-				$object = $object->callMethod($nameAndArgs->name, $nameAndArgs->args);
+				$object = $object->callMethod($this->interpreter, $nameAndArgs->name, $nameAndArgs->args);
 			} else {
 				if ($object instanceof Reference) {
 					$object = $object->getObject();
@@ -223,10 +243,10 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 
 				// TODO: check this (dereferencing return list during chained function calls)
 				if ($object instanceof ObjectList) {
-					$object = $object->getObject();
+					$object = $object->getObject(0);
 				}
 				if (!$object instanceof Invokable) {
-					throw new RuntimeException('Attempted to call a non-function' . get_class($oo) . $oo->getKey(), $nameAndArgsContext);
+					throw new RuntimeException('Attempted to call a non-function', $nameAndArgsContext);
 				}
 
 				$object = $object->invoke($nameAndArgs->args);
@@ -271,5 +291,19 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 
 		$nameAndArgsContexts = is_array($nameAndArgsContexts) ? $nameAndArgsContexts : [$nameAndArgsContexts];
 		return $this->applyNameAndArgs($varOrExp, $nameAndArgsContexts);
+	}
+
+	public function isTrue($value): bool {
+		return $value !== false && $value !== null;
+	}
+
+	public function mod($num, $mod): Literal {
+		if (is_float($num) || is_float($mod)) {
+			$result = fmod($mod + fmod($num, $mod), $mod);
+		} else {
+			$result = ($mod + ($num % $mod)) % $mod;
+		}
+
+		return new Literal($result);
 	}
 }

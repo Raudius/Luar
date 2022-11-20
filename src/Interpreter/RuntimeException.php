@@ -6,7 +6,8 @@ use Antlr\Antlr4\Runtime\RuleContext;
 
 class RuntimeException extends Exception
 {
-	private ?RuleContext $context;
+	/** @var RuleContext[] */
+	private array $context;
 
 	public function __construct(
 		string $message,
@@ -14,11 +15,15 @@ class RuntimeException extends Exception
 		int $code = 0,
 		\Throwable $previous = null
 	) {
-		$this->context = $context;
+		$this->context = $context ? [$context] : [];
 		parent::__construct($message, $code, $previous);
 	}
 
-	public function getContext(): ?RuleContext {
+	public function getContextTrace(): array {
 		return $this->context;
+	}
+
+	public function pushContext(RuleContext $context): void {
+		$this->context[] = $context;
 	}
 }

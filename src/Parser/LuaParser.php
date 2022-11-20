@@ -287,13 +287,13 @@ namespace Raudius\Luar\Parser {
 		    "\u{5}\u{14}\u{B}\u{9}\u{F2}\u{108}\u{3}\u{2}\u{2}\u{2}\u{F3}\u{F4}" .
 		    "\u{C}\u{7}\u{2}\u{2}\u{F4}\u{F5}\u{5}\u{3A}\u{1E}\u{2}\u{F5}\u{F6}" .
 		    "\u{5}\u{14}\u{B}\u{7}\u{F6}\u{108}\u{3}\u{2}\u{2}\u{2}\u{F7}\u{F8}" .
-		    "\u{C}\u{6}\u{2}\u{2}\u{F8}\u{F9}\u{5}\u{38}\u{1D}\u{2}\u{F9}\u{FA}" .
+		    "\u{C}\u{6}\u{2}\u{2}\u{F8}\u{F9}\u{5}\u{40}\u{21}\u{2}\u{F9}\u{FA}" .
 		    "\u{5}\u{14}\u{B}\u{7}\u{FA}\u{108}\u{3}\u{2}\u{2}\u{2}\u{FB}\u{FC}" .
-		    "\u{C}\u{5}\u{2}\u{2}\u{FC}\u{FD}\u{5}\u{36}\u{1C}\u{2}\u{FD}\u{FE}" .
+		    "\u{C}\u{5}\u{2}\u{2}\u{FC}\u{FD}\u{5}\u{38}\u{1D}\u{2}\u{FD}\u{FE}" .
 		    "\u{5}\u{14}\u{B}\u{6}\u{FE}\u{108}\u{3}\u{2}\u{2}\u{2}\u{FF}\u{100}" .
-		    "\u{C}\u{4}\u{2}\u{2}\u{100}\u{101}\u{5}\u{34}\u{1B}\u{2}\u{101}\u{102}" .
+		    "\u{C}\u{4}\u{2}\u{2}\u{100}\u{101}\u{5}\u{36}\u{1C}\u{2}\u{101}\u{102}" .
 		    "\u{5}\u{14}\u{B}\u{5}\u{102}\u{108}\u{3}\u{2}\u{2}\u{2}\u{103}\u{104}" .
-		    "\u{C}\u{3}\u{2}\u{2}\u{104}\u{105}\u{5}\u{40}\u{21}\u{2}\u{105}\u{106}" .
+		    "\u{C}\u{3}\u{2}\u{2}\u{104}\u{105}\u{5}\u{34}\u{1B}\u{2}\u{105}\u{106}" .
 		    "\u{5}\u{14}\u{B}\u{4}\u{106}\u{108}\u{3}\u{2}\u{2}\u{2}\u{107}\u{E7}" .
 		    "\u{3}\u{2}\u{2}\u{2}\u{107}\u{EB}\u{3}\u{2}\u{2}\u{2}\u{107}\u{EF}" .
 		    "\u{3}\u{2}\u{2}\u{2}\u{107}\u{F3}\u{3}\u{2}\u{2}\u{2}\u{107}\u{F7}" .
@@ -1205,7 +1205,7 @@ namespace Raudius\Luar\Parser {
 							break;
 
 							case 5:
-							    $localContext = new Context\ExpComparisonContext(new Context\ExpContext($parentContext, $parentState));
+							    $localContext = new Context\ExpBitwiseContext(new Context\ExpContext($parentContext, $parentState));
 							    $this->pushNewRecursionContext($localContext, $startState, self::RULE_exp);
 							    $this->setState(245);
 
@@ -1213,13 +1213,13 @@ namespace Raudius\Luar\Parser {
 							        throw new FailedPredicateException($this, "\\\$this->precpred(\\\$this->ctx, 4)");
 							    }
 							    $this->setState(246);
-							    $this->operatorComparison();
+							    $this->operatorBitwise();
 							    $this->setState(247);
 							    $this->recursiveExp(5);
 							break;
 
 							case 6:
-							    $localContext = new Context\ExpAndContext(new Context\ExpContext($parentContext, $parentState));
+							    $localContext = new Context\ExpComparisonContext(new Context\ExpContext($parentContext, $parentState));
 							    $this->pushNewRecursionContext($localContext, $startState, self::RULE_exp);
 							    $this->setState(249);
 
@@ -1227,13 +1227,13 @@ namespace Raudius\Luar\Parser {
 							        throw new FailedPredicateException($this, "\\\$this->precpred(\\\$this->ctx, 3)");
 							    }
 							    $this->setState(250);
-							    $this->operatorAnd();
+							    $this->operatorComparison();
 							    $this->setState(251);
 							    $this->recursiveExp(4);
 							break;
 
 							case 7:
-							    $localContext = new Context\ExpOrContext(new Context\ExpContext($parentContext, $parentState));
+							    $localContext = new Context\ExpAndContext(new Context\ExpContext($parentContext, $parentState));
 							    $this->pushNewRecursionContext($localContext, $startState, self::RULE_exp);
 							    $this->setState(253);
 
@@ -1241,13 +1241,13 @@ namespace Raudius\Luar\Parser {
 							        throw new FailedPredicateException($this, "\\\$this->precpred(\\\$this->ctx, 2)");
 							    }
 							    $this->setState(254);
-							    $this->operatorOr();
+							    $this->operatorAnd();
 							    $this->setState(255);
 							    $this->recursiveExp(3);
 							break;
 
 							case 8:
-							    $localContext = new Context\ExpBitwiseContext(new Context\ExpContext($parentContext, $parentState));
+							    $localContext = new Context\ExpOrContext(new Context\ExpContext($parentContext, $parentState));
 							    $this->pushNewRecursionContext($localContext, $startState, self::RULE_exp);
 							    $this->setState(257);
 
@@ -1255,7 +1255,7 @@ namespace Raudius\Luar\Parser {
 							        throw new FailedPredicateException($this, "\\\$this->precpred(\\\$this->ctx, 1)");
 							    }
 							    $this->setState(258);
-							    $this->operatorBitwise();
+							    $this->operatorOr();
 							    $this->setState(259);
 							    $this->recursiveExp(2);
 							break;
@@ -3108,42 +3108,6 @@ namespace Raudius\Luar\Parser\Context {
 		}
 	}
 
-	class ExpOrContext extends ExpContext
-	{
-		public function __construct(ExpContext $context)
-		{
-		    parent::__construct($context);
-
-		    $this->copyFrom($context);
-	    }
-
-	    /**
-	     * @return array<ExpContext>|ExpContext|null
-	     */
-	    public function exp(?int $index = null)
-	    {
-	    	if ($index === null) {
-	    		return $this->getTypedRuleContexts(ExpContext::class);
-	    	}
-
-	        return $this->getTypedRuleContext(ExpContext::class, $index);
-	    }
-
-	    public function operatorOr() : ?OperatorOrContext
-	    {
-	    	return $this->getTypedRuleContext(OperatorOrContext::class, 0);
-	    }
-
-		public function accept(ParseTreeVisitor $visitor)
-		{
-			if ($visitor instanceof LuaVisitor) {
-			    return $visitor->visitExpOr($this);
-		    }
-
-			return $visitor->visitChildren($this);
-		}
-	}
-
 	class ExpBitwiseContext extends ExpContext
 	{
 		public function __construct(ExpContext $context)
@@ -3174,6 +3138,42 @@ namespace Raudius\Luar\Parser\Context {
 		{
 			if ($visitor instanceof LuaVisitor) {
 			    return $visitor->visitExpBitwise($this);
+		    }
+
+			return $visitor->visitChildren($this);
+		}
+	}
+
+	class ExpOrContext extends ExpContext
+	{
+		public function __construct(ExpContext $context)
+		{
+		    parent::__construct($context);
+
+		    $this->copyFrom($context);
+	    }
+
+	    /**
+	     * @return array<ExpContext>|ExpContext|null
+	     */
+	    public function exp(?int $index = null)
+	    {
+	    	if ($index === null) {
+	    		return $this->getTypedRuleContexts(ExpContext::class);
+	    	}
+
+	        return $this->getTypedRuleContext(ExpContext::class, $index);
+	    }
+
+	    public function operatorOr() : ?OperatorOrContext
+	    {
+	    	return $this->getTypedRuleContext(OperatorOrContext::class, 0);
+	    }
+
+		public function accept(ParseTreeVisitor $visitor)
+		{
+			if ($visitor instanceof LuaVisitor) {
+			    return $visitor->visitExpOr($this);
 		    }
 
 			return $visitor->visitChildren($this);

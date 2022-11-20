@@ -20,14 +20,14 @@ final class Interpreter {
 		$this->root = $this->scope;
 	}
 
-	public function eval(string $program): void {
+	public function eval(string $program) {
 		$lexer = new LuaLexer(InputStream::fromString($program));
 		$tokens = new CommonTokenStream($lexer);
 		$parser = new LuaParser($tokens);
 		$parser->addErrorListener(new DiagnosticErrorListener());
 		$parser->setBuildParseTree(true);
 
-		(new LuarStatementVisitor($this))->visit($parser->chunk());
+		return (new LuarStatementVisitor($this))->visitBlock($parser->block())->getReturn();
 	}
 
 	public function getScope(): Scope {

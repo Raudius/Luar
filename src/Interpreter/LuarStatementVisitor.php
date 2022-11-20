@@ -2,7 +2,6 @@
 namespace Raudius\Luar\Interpreter;
 
 use Antlr\Antlr4\Runtime\Tree\TerminalNode;
-use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Table;
@@ -19,7 +18,7 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		$conditions = is_array($conditions) ? $conditions : [$conditions];
 		$blocks = is_array($blocks) ? $blocks : [$blocks];
 		foreach ($conditions as $i => $condition) {
-			if ($this->visitExp($condition)->getValue()) {
+			if ($this->isTrue($this->visitExp($condition)->getValue())) {
 				return $this->visitBlock($blocks[$i]);
 			}
 		}
@@ -156,7 +155,7 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 			throw new RuntimeException('[INTERNAL ERROR] Could not parse while loop', $context);
 		}
 
-		while ($this->visitExp($expContext)->getValue()) {
+		while ($this->isTrue($this->visitExp($expContext)->getValue())) {
 			$newScope = new Scope($this->interpreter->getScope());
 			$newScope->setExpectedExit(Scope::EXIT_EXPECT_BREAK_CONTINUE);
 

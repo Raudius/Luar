@@ -23,8 +23,8 @@ class Luar {
 		$this->interpreter->addLibrary(new LibMath());
 	}
 
-	public function eval(string $program): void {
-		$this->interpreter->eval($program);
+	public function eval(string $program) {
+		return $this->interpreter->eval($program);
 	}
 
 	public static function makeLuarObject($value): LuarObject {

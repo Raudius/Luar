@@ -1,10 +1,16 @@
 <?php
 namespace Raudius\Luar\Interpreter\LuarObject;
 
+use Raudius\Luar\Interpreter\RuntimeException;
+
 class Literal implements LuarObject {
 	private $value;
 
 	public function __construct($value) {
+		if ($value instanceof LuarObject) {
+			throw new RuntimeException('[INTERNAL ERROR] Literal value cannot be an object');
+		}
+
 		$this->value = $value;
 	}
 

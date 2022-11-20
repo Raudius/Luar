@@ -61,7 +61,7 @@ class ObjectList implements LuarObject {
 	//			print(b)
 	 /** **/
 	public function getValue() {
-		return $this->getObject()->getValue();
+		return $this->getObject(0)->getValue();
 	}
 
 	public function getObject(int $idx=0): LuarObject {
@@ -69,11 +69,22 @@ class ObjectList implements LuarObject {
 		return $objects[$idx] ?? new Literal(null);
 	}
 
-	public function slice(int $idx): ObjectList {
+	/**
+	 * Returns the "raw" object at the specified index.
+	 * Raw object means that other ObjectLists do not get expanded.
+	 *
+	 * @param int $idx
+	 * @return LuarObject
+	 */
+	public function getRawObject(int $idx=0): LuarObject {
+		return $this->objects[$idx] ?? new Literal(null);
+	}
+
+	public function slice(int $idx, $size=null): ObjectList {
 		$slice = [];
 		$objects = $this->getObjects();
 
-		$count = count($objects);
+		$count = $size ?? count($objects);
 		for (; $idx<$count; $idx++) {
 			$slice[] = $objects[$idx];
 		}
@@ -86,7 +97,7 @@ class ObjectList implements LuarObject {
 	}
 
 	public function getType(): string {
-		return 'list';
+		return $this->getObject(0)->getType();
 	}
 
 	public function count(): int {

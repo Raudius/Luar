@@ -284,7 +284,7 @@ class LuaBaseVisitor extends AbstractParseTreeVisitor implements LuaVisitor
 	 * The default implementation returns the result of calling
 	 * {@see self::visitChildren()} on `context`.
 	 */
-	public function visitExpOr(Context\ExpOrContext $context)
+	public function visitExpBitwise(Context\ExpBitwiseContext $context)
 	{
 	    return $this->visitChildren($context);
 	}
@@ -295,7 +295,7 @@ class LuaBaseVisitor extends AbstractParseTreeVisitor implements LuaVisitor
 	 * The default implementation returns the result of calling
 	 * {@see self::visitChildren()} on `context`.
 	 */
-	public function visitExpBitwise(Context\ExpBitwiseContext $context)
+	public function visitExpOr(Context\ExpOrContext $context)
 	{
 	    return $this->visitChildren($context);
 	}

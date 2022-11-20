@@ -1,6 +1,7 @@
 <?php
 namespace Raudius\Luar\Interpreter;
 
+use Raudius\Luar\Interpreter\LuarObject\DivZero;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
@@ -34,13 +35,9 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 	}
 
 	public function visitExpNumber(Context\ExpNumberContext $context) {
-		$number = $context->number();
-		if ($number && $int = $number->INT()) {
-			return new Literal( (int) $int->getText() );
-		}
-
-		if ($float = $number->FLOAT()) {
-			return new Literal((float) $float->getText());
+		$numberText = $context->getText();
+		if (is_numeric($numberText)) {
+			return new Literal($numberText + 0);
 		}
 
 		throw new RuntimeException('Could not parse number expression', $context);
@@ -114,14 +111,13 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 		return $fields;
 	}
 
-
 	public function visitField(Context\FieldContext $context) {
 		$expContexts = $context->exp();
 		/** @var Context\ExpContext[] $expContexts */
 		$expContexts = is_array($expContexts) ? $expContexts : [$expContexts];
 
 		if (count($expContexts) === 2) {
-			$key = $this->visitExp($expContexts[0]);
+			$key = $this->visitExp($expContexts[0])->getValue();
 		} else {
 			$key = $context->NAME() ? $context->NAME()->getText() : null;
 		}
@@ -151,16 +147,35 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 	}
 
 	public function visitExpComparison(Context\ExpComparisonContext $context): LuarObject {
-		$v1 = $this->visitExp($context->exp(0))->getValue();
-		$v2 = $this->visitExp($context->exp(1))->getValue();
+		$op = $context->operatorComparison()->getText();
+		$o1 = $this->visitExp($context->exp(0));
+		$o2 = $this->visitExp($context->exp(1));
+		$v1 = $o1->getValue();
+		$v2 = $o2->getValue();
 
-		switch ($context->operatorComparison()->getText()) {
-			case '<':  return new Literal($v1 < $v2);
-			case '>':  return new Literal($v1 > $v2);
-			case '<=': return new Literal($v1 <= $v2);
-			case '>=': return new Literal($v1 >= $v2);
+		if (
+			(is_float($v1) && is_int($v2))
+			|| (is_float($v2) && is_int($v1))
+		) {
+			$v1 = (float) $v1;
+			$v2 = (float) $v2;
+		}
+
+		switch ($op) {
 			case '==': return new Literal($v1 === $v2); // TODO: Lua vs PHP comparison
 			case '~=': return new Literal($v1 !== $v2);
+		}
+
+		if ($o1->getType() !== $o2->getType()) {
+			throw new RuntimeException("attempt to compare {$o1->getType()} with {$o2->getType()}", $context);
+		}
+
+
+		switch ($op) {
+			case '<':  return new Literal(($v1 <=> $v2) === -1);
+			case '>':  return new Literal(($v1 <=> $v2) === 1);
+			case '<=': return new Literal(($v1 <=> $v2) <= 0);
+			case '>=': return new Literal(($v1 <=> $v2) >= 0);
 		}
 
 		throw new RuntimeException('Could not evaluate the comparison expression', $context);
@@ -169,6 +184,15 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 	public function visitExpAddSub(Context\ExpAddSubContext $context): LuarObject {
 		$v1 = $this->visitExp($context->exp(0))->getValue();
 		$v2 = $this->visitExp($context->exp(1))->getValue();
+
+		if (!is_numeric($v1)) {
+			$value = is_scalar($v1) ? (string) $v1 : gettype($v1);
+			throw new RuntimeException('Cannot perform arithmetic operation on non-number: ' . $value);
+		}
+		if(!is_numeric($v2)) {
+			$value = is_scalar($v2) ? (string) $v2 : gettype($v2);
+			throw new RuntimeException('Cannot perform arithmetic operation on non-number: ' . $value);
+		}
 
 		switch ($context->operatorAddSub()->getText()) {
 			case '+':  return new Literal($v1 + $v2);
@@ -182,11 +206,20 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 		$v1 = $this->visitExp($context->exp(0))->getValue();
 		$v2 = $this->visitExp($context->exp(1))->getValue();
 
+		if (!is_numeric($v1)) {
+			$value = is_scalar($v1) ? (string) $v1 : gettype($v1);
+			throw new RuntimeException('Cannot perform arithmetic operation on non-number: ' . $value);
+		}
+		if(!is_numeric($v2)) {
+			$value = is_scalar($v2) ? (string) $v2 : gettype($v2);
+			throw new RuntimeException('Cannot perform arithmetic operation on non-number: ' . $value);
+		}
+
 		switch ($context->operatorMulDivMod()->getText()) {
 			case '*':  return new Literal($v1 * $v2);
 			case '/':  return new Literal($v1 / $v2);
-			case '%':  return new Literal($v1 % $v2);
-			case '//':  return new Literal(intdiv($v1, $v2));
+			case '%':  return $this->mod($v1, $v2);
+			case '//':  return new Literal(floor($v1 / $v2));
 		}
 
 		throw new RuntimeException('Could not evaluate the add/sub expression', $context);
@@ -233,8 +266,8 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 			case '&':  return new Literal($v1 & $v2);
 			case '|':  return new Literal($v1 | $v2);
 			case '~': return new Literal($v1 ^ $v2);
-			case '<<': return new Literal($v1 >> $v2);
-			case '>>': return new Literal($v1 << $v2);
+			case '<<': return new Literal($v1 << $v2);
+			case '>>': return new Literal($v1 >> $v2);
 		}
 
 		throw new RuntimeException('Could not evaluate the bitwise expression', $context);

@@ -5,6 +5,7 @@ use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
+use Raudius\Luar\Interpreter\LuarObject\Table;
 use Raudius\Luar\Util\PatternHelper;
 
 class LibString extends Library {
@@ -32,7 +33,7 @@ class LibString extends Library {
 			'find' => $this->find(),
 			'format' => $this->format(),
 			'gmatch' => $this->gmatch(), // todo
-			'gsub' => $this->gsub(), // todo
+			'gsub' => $this->gsub(),
 			'len' => $this->len(),
 			'lower' => $this->lower(),
 			'match' => $this->match(),
@@ -63,23 +64,25 @@ class LibString extends Library {
 	}
 
 	private function byte(): Invokable {
-		return new Invokable(function (ObjectList $ol): string {
+		return new Invokable(function (ObjectList $ol) {
 			$subject = $this->validateTypeN($ol, ['string'], 0); /** @var string $subject */
-			$indices = $this->validateTypes($ol, ['number'], 1); /** @var int[] $indices */
+			$i = $this->validateTypeN($ol, ['number', 'nil'], 1)->getValue() ?? 1;
+			$j = $this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? $i;
 
 			$bytes = [];
 			$chars = str_split($subject);
-			foreach ($indices as $index) {
-				--$index;
-				if (isset($chars[$index])) {
-					$bytes[] = new Literal(ord($chars[$index]));
+			for (; $i<=$j; $i++) {
+				if (isset($chars[$i-1])) {
+					$bytes[] = new Literal(ord($chars[$i-1]));
 				}
 			}
+
+
 			return new ObjectList($bytes);
 		});
 	}
 	private function char(): Invokable {
-		return Invokable::fromPhpCallable(static function (...$chars): string {
+		return Invokable::fromPhpCallable(static function (...$chars) {
 			$string = '';
 			foreach ($chars as $char) {
 				if (is_numeric($char)) {
@@ -199,13 +202,13 @@ class LibString extends Library {
 
 	private function rep(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$string = (string) $ol->getObject( 0);
-			$times = $this->validateTypeN($ol, ['number'], 1)->getValue(); /** @var int $times */
-			$sep = (string) $ol->getObject( 2);
+			$string = (string) $this->validateTypeN($ol, ['string'], 0)->getValue();
+			$times = (int) $this->validateTypeN($ol, ['number'], 1)->getValue();
+			$sep = $this->validateTypeN($ol, ['string', 'nil'], 2)->getValue() ?? '';
 			if ($times === 0) {
 				return '';
 			}
-			return str_repeat($string . $sep, $times-1) . ($times > 0 ? $string : '');
+			return str_repeat($string . $sep, $times-1) . $string ;
 		});
 	}
 
@@ -227,6 +230,37 @@ class LibString extends Library {
 			}
 
 			return substr($subject, $i, $len) ?: '';
+		});
+	}
+
+	private function gsub(): Invokable {
+		return new Invokable(function (ObjectList $ol) {
+			$subject = (string) $this->validateTypeN($ol, ['string'], 0)->getValue();
+			$pattern = (string) $this->validateTypeN($ol, ['string'], 1)->getValue();
+			$repl = $this->validateTypeN($ol, ['string', 'number', 'table', 'function'], 2);
+			$n = $this->validateTypeN($ol, ['number', 'nil'], 3)->getValue() ?? -1;
+
+			$regex = $this->patternHelper->patternToRegex($pattern);
+
+			// FIXME: efficiency gains: preg_match_all + preg_replace inefficient
+			preg_match_all($regex, $subject, $matches);
+			$repls = [];
+			$patterns = [];
+			foreach ($matches[0] as $match) {
+				$obj = $repl;
+				if ($obj instanceof Invokable) {
+					$obj = $obj->invoke(new ObjectList([new Literal($match)]));
+				} elseif ($obj instanceof Table) {
+					$obj = $obj->get($match);
+				}
+
+				$repls[] = (string) $obj->getValue();
+				$patterns[] = $regex;
+			}
+
+			$return = preg_replace($patterns, $repls, $subject, $n);
+
+			return new ObjectList([ new Literal($return) ]);
 		});
 	}
 }

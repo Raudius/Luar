@@ -24,6 +24,8 @@ class LibCore extends Library {public function getName(): string {
 			'tonumber' => $this->tonumber(),
 			'tostring' => $this->tostring(),
 			'type' => $this->type(),
+			'setmetatable' => $this->setmetatable(),
+			'getmetatable' => $this->getmetatable(),
 		];
 	}
 
@@ -39,7 +41,7 @@ class LibCore extends Library {public function getName(): string {
 			$success = true;
 			try {
 				$result = $function->invoke($args);
-			} catch (\Exception $exception) { // TODO: Only catch LuarException?
+			} catch (\Throwable $exception) { // TODO: Only catch LuarException?
 				$success = false;
 				$result = $exception->getMessage();
 			}
@@ -68,17 +70,21 @@ class LibCore extends Library {public function getName(): string {
 	}
 
 	private function assert(): Invokable {
-		return Invokable::fromPhpCallable(function ($value, $message = null) {
-			if (!$value) {
-				$message = new Literal(is_string($message) ? $message : 'assertion failed!');
-				$this->error()->invoke(new ObjectList([$message]));
+		return new Invokable(function (ObjectList $ol) {
+			if (!$ol->getObject(0)->getValue()) {
+				$message = (string) ($ol->getRawObject(1)->getValue() ?? 'assertion failed');
+				$this->error()->invoke(new ObjectList([new Literal($message)]));
 			}
+
+			$return = $ol->getRawObject(0);
+			return $return instanceof ObjectList ? $return : new ObjectList([$return]);
 		});
 	}
 
 	private function tonumber(): Invokable {
 		return Invokable::fromPhpCallable(static function ($value, $base = null) {
-			if (!is_numeric($value)) {
+			if (is_string($value) && preg_match('/^[ \\t\\n]*[+-]?[a-zA-Z0-9+-]*(\\.[a-zA-Z0-9+-]*)?[ \\t\\n]*$/', $value) !== 1) {
+				var_dump($value);
 				return null;
 			}
 
@@ -89,7 +95,24 @@ class LibCore extends Library {public function getName(): string {
 				return intval($value, (int) $base);
 			}
 
-			return (float) $value;
+			// Calculate hex strings
+			if (is_string($value) && preg_match('/^([+-]?0[xX])([A-Fa-f0-9]+)(\\.[\\d]+)?$/', $value, $matches) === 1) {
+				$float = 0;
+				if (isset($matches[3])) {
+					$hexFloat = substr($matches[3],1);
+					$float = hexdec($matches[3]) / (16 ** strlen($hexFloat));
+				}
+
+				$neg = $value[0] === '-' ? -1 : 1;
+
+				return (hexdec($matches[2]) + $float) * $neg;
+			}
+
+			if (!is_numeric($value)) {
+				return null;
+			}
+
+			return $value + 0;
 		});
 	}
 
@@ -102,6 +125,25 @@ class LibCore extends Library {public function getName(): string {
 	private function type(): Invokable {
 		return new Invokable(static function (ObjectList $objectList) {
 			return $objectList->getObject(0)->getType();
+		});
+	}
+
+	private function setmetatable(): Invokable {
+		return new Invokable(function (ObjectList $ol) {
+			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
+			$metatable = $this->validateTypeN($ol, ['table', 'nil'], 1);
+
+			if ($metatable instanceof Table) {
+				$table->setMetaTable($metatable);
+			} else {
+				$table->setMetaTable(null);
+			}
+		});
+	}
+	private function getmetatable(): Invokable {
+		return new Invokable(function (ObjectList $ol) {
+			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
+			return new ObjectList([$table->getMetaTable()]);
 		});
 	}
 

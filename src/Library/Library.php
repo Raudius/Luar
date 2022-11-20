@@ -45,12 +45,12 @@ abstract class Library {
 	}
 
 	protected function validateTypeN(ObjectList $objectList, array $types, int $n): LuarObject {
-		return $this->validateType($objectList->getObject($n), $types, $n);
+		return $this->validateType($objectList->getObject($n), $types, $n + 1);
 	}
 
 	protected function validateType(LuarObject $object, array $types, int $argn): LuarObject {
 		$objType = $object->getType();
-		if (in_array($object, $types, true)) {
+		if (!in_array($objType, $types, true)) {
 			$typesString = implode('|', $types);
 			throw new RuntimeException("Bad argument, in position #{$argn} expected $typesString, got $objType"); // TODO: replace with specialised BadArgument exception?
 		}
@@ -70,9 +70,13 @@ abstract class Library {
 				if ($nArgs !== null) {
 					$args = array_slice($args, 0, $nArgs);
 				}
-
 				try {
-					return $function(...$args);
+					$result = $function(...$args);
+					if (is_float($result) && floor($result) === $result && $result < PHP_INT_MAX && $result > PHP_INT_MIN) {
+						$result = (int) $result;
+					}
+
+					return $result;
 				} catch (Throwable $t) {
 					throw new RuntimeException($t->getMessage());
 				}

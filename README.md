@@ -24,3 +24,5 @@ Also notewothy:
 * Performance and memory efficiency have not been the main focus in early development
 * Recursive Luar programs can result in hugely nested stacks, which may trigger `xdebug.max_nesting_level`
 * Error messages may not match exactly with the C interpreter for Lua.
+* Integer overflow is not handled. PHP's overflow behaviour is kept, which differs from Lua's.
+* Division by zero (NaN and infinites) are not handled. Error will be raised.

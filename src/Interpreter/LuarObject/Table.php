@@ -9,6 +9,9 @@ class Table extends Scope implements LuarObject  {
 	private ?int $length = null;
 	private ?Table $metaTable = null;
 
+	/**
+	 * @return LuarObject[]
+	 */
 	public function getValue(): array {
 		return $this->assigns;
 	}

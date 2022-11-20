@@ -26,7 +26,20 @@ class Luar {
 	}
 
 	public function eval(string $program) {
-		return $this->interpreter->eval($program)->getValue();
+		return static::objectToPhp($this->interpreter->eval($program)->getValue());
+	}
+
+	public static function objectToPhp(LuarObject $object) {
+		if ($object instanceof Table) {
+			$table = [];
+			foreach ($object->getValue() as $k => $value) {
+				$table[$k] = self::objectToPhp($value);
+			}
+
+			return $table;
+		}
+
+		return $object->getValue();
 	}
 
 	public static function makeLuarObject($value): LuarObject {
@@ -56,7 +69,7 @@ class Luar {
 			return self::makeLuarObject($arg);
 		}, $args);
 
-		return $invokable->invoke(new ObjectList($args))->getValue();
+		return static::objectToPhp($invokable->invoke(new ObjectList($args)));
 	}
 
 	public function getGlobals(): array {

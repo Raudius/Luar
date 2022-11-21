@@ -74,6 +74,13 @@ class Luar {
 		return static::objectToPhp($invokable->invoke(new ObjectList($args)));
 	}
 
+	public function callLuarClosure(callable $closure, array $args) {
+		$args = array_map([$this, 'makeLuarObject'], $args);
+
+		$return = (new Invokable($closure))->invoke(new ObjectList($args));
+		return static::objectToPhp($return);
+	}
+
 	public function getGlobals(): array {
 		$globals = [];
 		foreach ($this->interpreter->getRoot()->getAssigns() as $k => $o) {

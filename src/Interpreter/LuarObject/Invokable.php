@@ -15,7 +15,7 @@ class Invokable implements LuarObject {
 		$this->value = $function;
 	}
 
-	public function getValue() {
+	public function getValue(): callable {
 		return $this->value;
 	}
 

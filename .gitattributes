@@ -1,3 +1,5 @@
 /tests         	export-ignore
 Lua.g4       	export-ignore
 Makefile		export-ignore
+.gitignore		export-ignore
+.gitattributes	export-ignore

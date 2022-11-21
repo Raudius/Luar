@@ -5,7 +5,7 @@ use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Table;
-use Raudius\Luar\Interpreter\RuntimeException;
+use Raudius\Luar\Interpreter\LuarRuntimeException;
 
 class LibCore extends Library {public function getName(): string {
 		return 'core';
@@ -53,7 +53,7 @@ class LibCore extends Library {public function getName(): string {
 	private function error(): Invokable {
 		return Invokable::fromPhpCallable(static function ($message) {
 			$message = is_string($message) ? $message : '';
-			throw new RuntimeException($message); // TODO: Special UserError exception?
+			throw new LuarRuntimeException($message); // TODO: Special UserError exception?
 		});
 	}
 
@@ -158,13 +158,13 @@ class LibCore extends Library {public function getName(): string {
 			}
 
 			if (!is_numeric($i)) {
-				throw new RuntimeException("select index argument expects '#' or number");
+				throw new LuarRuntimeException("select index argument expects '#' or number");
 			}
 
 			$index = (int) $i;
 			$index = ($index < 0) ? $len + $index + 1: $index;
 			if ($index <= 0) {
-				throw new RuntimeException("select index out of range ($index) len=$len");
+				throw new LuarRuntimeException("select index out of range ($index) len=$len");
 			}
 
 			return $items->slice($index-1);

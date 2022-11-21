@@ -49,7 +49,7 @@ final class Interpreter {
 		$oldScope = $this->scope;
 		$scope = $oldScope->getParent();
 		if ($scope === null) {
-			throw new RuntimeException("FATAL ERROR! Attempted to pop root scope.");
+			throw new LuarRuntimeException("FATAL ERROR! Attempted to pop root scope.");
 		}
 		$this->scope = $scope;
 		return $oldScope;

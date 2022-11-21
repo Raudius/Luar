@@ -12,7 +12,7 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		$conditions = $context->exp();
 		$blocks = $context->block();
 		if (!$conditions || !$blocks) {
-			throw new RuntimeException('Could not parse if statement, missing condition or block.');
+			throw new LuarRuntimeException('Could not parse if statement, missing condition or block.');
 		}
 
 		$conditions = is_array($conditions) ? $conditions : [$conditions];
@@ -49,7 +49,7 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		if (isset($name) && $funcName->isMethod()) {
 			$scope = $scope->get($name);
 			if (!$scope instanceof Table) {
-				throw new RuntimeException('Attempting to declare method on non-table variable.', $context);
+				throw new LuarRuntimeException('Attempting to declare method on non-table variable.', $context);
 			}
 		}
 
@@ -98,13 +98,13 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		[$it, $end, $step] = [$exps[0], $exps[1], $exps[2] ?? 1];
 
 		if (!is_numeric($it)) {
-			throw new RuntimeException('Numeric for loop: start expression must be numeric.', $context);
+			throw new LuarRuntimeException('Numeric for loop: start expression must be numeric.', $context);
 		}
 		if (!is_numeric($end)) {
-			throw new RuntimeException('Numeric for loop: end expression, must be numeric.', $context);
+			throw new LuarRuntimeException('Numeric for loop: end expression, must be numeric.', $context);
 		}
 		if (!is_numeric($step) || $step === 0) {
-			throw new RuntimeException('Numeric for loop: step expression must be a non-zero number (or nil).', $context);
+			throw new LuarRuntimeException('Numeric for loop: step expression must be a non-zero number (or nil).', $context);
 		}
 
 		$checkMoreThan = $step < 0;
@@ -152,7 +152,7 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		$blockContext = $context->block();
 
 		if (!$expContext || !$blockContext) {
-			throw new RuntimeException('[INTERNAL ERROR] Could not parse while loop', $context);
+			throw new LuarRuntimeException('[INTERNAL ERROR] Could not parse while loop', $context);
 		}
 
 		while ($this->isTrue($this->visitExp($expContext)->getValue())) {
@@ -175,7 +175,7 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		$names = is_array($names) ? $names : [$names];
 
 		if (!$explist || !$blockContext || empty($names)) {
-			throw new RuntimeException('[INTERNAL ERROR] Could not parse generic for loop', $context);
+			throw new LuarRuntimeException('[INTERNAL ERROR] Could not parse generic for loop', $context);
 		}
 
 		[$i, $v] = array_map(static function (TerminalNode $node): string {
@@ -187,10 +187,10 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		$index = $explist->getObject(2);
 
 		if ($iterator->getType() !== 'function') {
-			throw new RuntimeException('Generic for loop, expects first item in expression list to be an function.');
+			throw new LuarRuntimeException('Generic for loop, expects first item in expression list to be an function.');
 		}
 		if ($table->getType() !== 'table') {
-			throw new RuntimeException('Generic for loop, expects second item in expression list to be a table. ');
+			throw new LuarRuntimeException('Generic for loop, expects second item in expression list to be a table. ');
 		}
 
 		while (
@@ -218,7 +218,7 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 		$blockContext = $context->block();
 
 		if (!$expContext || !$blockContext) {
-			throw new RuntimeException('[INTERNAL ERROR] Could not parse while loop', $context);
+			throw new LuarRuntimeException('[INTERNAL ERROR] Could not parse while loop', $context);
 		}
 
 

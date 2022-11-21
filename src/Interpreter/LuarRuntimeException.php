@@ -4,7 +4,7 @@ namespace Raudius\Luar\Interpreter;
 use Exception;
 use Antlr\Antlr4\Runtime\ParserRuleContext;
 
-class RuntimeException extends Exception
+class LuarRuntimeException extends Exception
 {
 	/** @var ParserRuleContext[] */
 	private array $context;

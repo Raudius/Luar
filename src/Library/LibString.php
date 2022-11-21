@@ -6,7 +6,7 @@ use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Table;
-use Raudius\Luar\Interpreter\RuntimeException;
+use Raudius\Luar\Interpreter\LuarRuntimeException;
 use Raudius\Luar\Util\PatternHelper;
 
 class LibString extends Library {
@@ -98,7 +98,7 @@ class LibString extends Library {
 
 				$char = $char + 0;
 				if ($char > 255 || $char < 0) {
-					throw new RuntimeException('chr() value out of range');
+					throw new LuarRuntimeException('chr() value out of range');
 				}
 				$string .= chr((int) $char);
 			}
@@ -240,7 +240,7 @@ class LibString extends Library {
 
 			$max_reps = static::MAX_STRLEN_FORMAT / $len;
 			if ($times > $max_reps) {
-				throw new RuntimeException('rep(): resulting string too large');
+				throw new LuarRuntimeException('rep(): resulting string too large');
 			}
 
 			return str_repeat($string . $sep, $times-1) . $string ;

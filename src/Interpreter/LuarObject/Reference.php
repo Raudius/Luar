@@ -1,7 +1,7 @@
 <?php
 namespace Raudius\Luar\Interpreter\LuarObject;
 
-use Raudius\Luar\Interpreter\RuntimeException;
+use Raudius\Luar\Interpreter\LuarRuntimeException;
 use Raudius\Luar\Interpreter\Scope;
 
 class Reference implements LuarObject {
@@ -30,7 +30,7 @@ class Reference implements LuarObject {
 			return $object->get($this->key) ?: new Literal(null);
 		}
 
-		throw new RuntimeException('Cannot get property of non-object. ' . get_class($this->parent));
+		throw new LuarRuntimeException('Cannot get property of non-object. ' . get_class($this->parent));
 	}
 
 	public function getValue(){
@@ -44,7 +44,7 @@ class Reference implements LuarObject {
 		}
 
 		if (!$scope instanceof Scope) {
-			throw new RuntimeException('Cannot assign value to non-object.');
+			throw new LuarRuntimeException('Cannot assign value to non-object.');
 		}
 
 		// TODO: Remove dereference?

@@ -5,7 +5,7 @@ use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Table;
-use Raudius\Luar\Interpreter\RuntimeException;
+use Raudius\Luar\Interpreter\LuarRuntimeException;
 
 class LibTable extends Library {
 	public function getName(): string {
@@ -38,13 +38,13 @@ class LibTable extends Library {
 			$string = '';
 			for ($i=$start; $i<=$end; $i++) {
 				if (!$table->has($i)){
-					throw new RuntimeException("table.concat index out of bounds ($i)");
+					throw new LuarRuntimeException("table.concat index out of bounds ($i)");
 				}
 
 				$obj = $table->get($i);
 
 				if (!$obj instanceof Literal) {
-					throw new RuntimeException("concat(): disallowed type: {$obj->getType()}");
+					throw new LuarRuntimeException("concat(): disallowed type: {$obj->getType()}");
 				}
 
 				$string .= $table->get($i);
@@ -70,7 +70,7 @@ class LibTable extends Library {
 			}
 
 			if ($pos <= 0) {
-				throw new RuntimeException('table.insert position out of range: ' . $pos);
+				throw new LuarRuntimeException('table.insert position out of range: ' . $pos);
 			}
 
 			// Shift other elements
@@ -191,7 +191,7 @@ class LibTable extends Library {
 			$item2 = $ol->getObject(1);
 
 			if ($item1->getType() !== $item2->getType()) {
-				throw new RuntimeException("attempt to compare {$item1->getType()} with {$item2->getType()}");
+				throw new LuarRuntimeException("attempt to compare {$item1->getType()} with {$item2->getType()}");
 			}
 
 			// TODO: compare PHP's spaceship `<=>` operator results with Lua's `<` (less-than) operator

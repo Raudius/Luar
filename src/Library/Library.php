@@ -4,7 +4,7 @@ namespace Raudius\Luar\Library;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
-use Raudius\Luar\Interpreter\RuntimeException;
+use Raudius\Luar\Interpreter\LuarRuntimeException;
 use Throwable;
 
 abstract class Library {
@@ -28,7 +28,7 @@ abstract class Library {
 
 	/**
 	 * @return LuarObject[]
-	 * @throws RuntimeException
+	 * @throws LuarRuntimeException
 	 */
 	protected function validateTypes(ObjectList $objectList, array $types, int $offset = 0): array {
 		$objectList = $offset > 0 ? $objectList->slice($offset) : $objectList;
@@ -52,7 +52,7 @@ abstract class Library {
 		$objType = $object->getType();
 		if (!in_array($objType, $types, true)) {
 			$typesString = implode('|', $types);
-			throw new RuntimeException("Bad argument, in position #{$argn} expected $typesString, got $objType"); // TODO: replace with specialised BadArgument exception?
+			throw new LuarRuntimeException("Bad argument, in position #{$argn} expected $typesString, got $objType"); // TODO: replace with specialised BadArgument exception?
 		}
 
 		return $object;
@@ -60,7 +60,7 @@ abstract class Library {
 
 	public function __call($name, $arguments) {
 		return Invokable::fromPhpCallable(function () use ($name) {
-			throw new RuntimeException("Unimplemented function in '{$this->getName()}' library: '$name'");
+			throw new LuarRuntimeException("Unimplemented function in '{$this->getName()}' library: '$name'");
 		});
 	}
 
@@ -78,7 +78,7 @@ abstract class Library {
 
 					return $result;
 				} catch (Throwable $t) {
-					throw new RuntimeException($t->getMessage());
+					throw new LuarRuntimeException($t->getMessage());
 				}
 			}
 		);

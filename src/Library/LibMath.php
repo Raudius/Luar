@@ -4,7 +4,7 @@ namespace Raudius\Luar\Library;
 use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
-use Raudius\Luar\Interpreter\RuntimeException;
+use Raudius\Luar\Interpreter\LuarRuntimeException;
 
 class LibMath extends Library {
 	public function getName(): string {
@@ -57,7 +57,7 @@ class LibMath extends Library {
 					return atan2($args[0], $args[1]);
 				}
 
-				throw new RuntimeException('math.atan expects at least one argument.');
+				throw new LuarRuntimeException('math.atan expects at least one argument.');
 			}
 		);
 	}
@@ -112,7 +112,7 @@ class LibMath extends Library {
 
 			if ($rand === null) {
 				if ($n < $m) {
-					throw new RuntimeException('bad arguments to \'math.random\' (interval is empty)');
+					throw new LuarRuntimeException('bad arguments to \'math.random\' (interval is empty)');
 				}
 				$rand = rand($m, $n);
 			}
@@ -148,7 +148,7 @@ class LibMath extends Library {
 			foreach ($ol->getObjects() as $object) {
 				$v = $object->getValue();
 				if (!is_numeric($v)) {
-					throw new RuntimeException('Non-numeric argument passed to max()');
+					throw new LuarRuntimeException('Non-numeric argument passed to max()');
 				}
 
 				$values[] = $v;
@@ -164,7 +164,7 @@ class LibMath extends Library {
 			foreach ($ol->getObjects() as $object) {
 				$v = $object->getValue();
 				if (!is_numeric($v)) {
-					throw new RuntimeException('Non-numeric argument passed to max()');
+					throw new LuarRuntimeException('Non-numeric argument passed to max()');
 				}
 
 				$values[] = $v;

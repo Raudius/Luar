@@ -40,13 +40,16 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 				$child = $context->getChild($i);
 				$this->visit($child);
 			}
-		} catch (RuntimeException $e) {
+		} catch (LuarRuntimeException $e) {
 			if ($child instanceof Context\StatContext) {
 				$e->pushContext($child);
 			}
 			throw $e;
 		} catch (\Throwable $e) {
-			throw new RuntimeException($e->getMessage(), $child, 0, $e);
+			if (!$e instanceof \Exception) {
+				throw new LuarRuntimeException('[FATAL PHP ERROR]' . $e->getMessage(), null, 0, $e);
+			}
+			throw $e;
 		}
 
 		return $this->interpreter->popScope();
@@ -63,7 +66,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 			return $result;
 		}
 
-		throw new RuntimeException("[INTERNAL ERROR]: Expression did not resolve to LuarObject.", $context);
+		throw new LuarRuntimeException("[INTERNAL ERROR]: Expression did not resolve to LuarObject.", $context);
 	}
 
 	public function visitFuncname(Context\FuncnameContext $context): FuncName {
@@ -132,7 +135,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 	public function visitNameVariable(Context\NameVariableContext $context, ?bool $declareLocal = false): LuarObject {
 		$name = $context->NAME() ? $context->NAME()->getText() : null;
 		if (!$name) {
-			throw new RuntimeException('[ERROR INTERNAL] Unknown name variable declaration.', $context);
+			throw new LuarRuntimeException('[ERROR INTERNAL] Unknown name variable declaration.', $context);
 		}
 
 
@@ -153,12 +156,12 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 	public function visitExpVariable(Context\ExpVariableContext $context): LuarObject {
 		$expContext = $context->exp();
 		if (!$expContext) {
-			throw new RuntimeException('[ERROR INTERNAL] Unknown expression variable declaration.', $context);
+			throw new LuarRuntimeException('[ERROR INTERNAL] Unknown expression variable declaration.', $context);
 		}
 
 		$object = $this->visitExp($expContext);
 		if (!$object instanceof Scope) {
-			throw new RuntimeException('Cannot get properties of non-scopable expression.', $context);
+			throw new LuarRuntimeException('Cannot get properties of non-scopable expression.', $context);
 		}
 
 
@@ -179,7 +182,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 			}
 
 			if (!$obj instanceof Reference && !$obj instanceof Scope) {
-				throw new RuntimeException('Cannot get properties of non-scopable expression.');
+				throw new LuarRuntimeException('Cannot get properties of non-scopable expression.');
 			}
 
 			$variable = new Reference(
@@ -240,7 +243,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 			if ($nameAndArgs->name) {
 				$method = $this->interpreter->getMethod($object, $nameAndArgs->name);
 				if (!$method) {
-					throw new RuntimeException("No such method ({$nameAndArgs->name}) for given object");
+					throw new LuarRuntimeException("No such method ({$nameAndArgs->name}) for given object");
 				}
 
 				// FIXME optimise args creation
@@ -255,7 +258,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 					$object = $object->getObject(0);
 				}
 				if (!$object instanceof Invokable) {
-					throw new RuntimeException("Attempted to call a non-function");
+					throw new LuarRuntimeException("Attempted to call a non-function");
 				}
 
 				$object = $object->invoke($nameAndArgs->args);
@@ -277,7 +280,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 			return $this->visitExp($exp);
 		}
 
-		throw new RuntimeException('Variable or expression could not be evaluated.', $context);
+		throw new LuarRuntimeException('Variable or expression could not be evaluated.', $context);
 	}
 
 	public function shouldVisitNextChild(RuleNode $node, $currentResult): bool {

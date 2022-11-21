@@ -79,7 +79,7 @@ class Scope {
 		return $this->return ?? new Literal(null);
 	}
 
-	public function getAssigns() {  // todo: delete?
+	public function getAssigns(): array {
 		return $this->assigns;
 	}
 
@@ -96,10 +96,6 @@ class Scope {
 		}
 
 		return [$info];
-	}
-
-	public function __toString() {
-		return json_encode($this->__debugInfo()) ?: 'Scope';
 	}
 
 	public function isRoot(): bool {

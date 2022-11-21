@@ -8,7 +8,6 @@ use Raudius\Luar\Interpreter\LuarObject\Invokable;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
 use Raudius\Luar\Interpreter\LuarObject\Reference;
 use Raudius\Luar\Interpreter\LuarObject\Table;
-use Raudius\Luar\Library\Library;
 use Raudius\Luar\Parser\LuaLexer;
 use Raudius\Luar\Parser\LuaParser;
 
@@ -22,7 +21,7 @@ final class Interpreter {
 		$this->root = $this->scope;
 	}
 
-	public function eval(string $program) {
+	public function eval(string $program): LuarObject {
 		$lexer = new LuaLexer(InputStream::fromString($program));
 		$tokens = new CommonTokenStream($lexer);
 		$parser = new LuaParser($tokens);
@@ -55,23 +54,8 @@ final class Interpreter {
 		return $oldScope;
 	}
 
-	public function setScope(Scope $scope) {
+	public function setScope(Scope $scope): void {
 		$this->scope = $scope;
-	}
-
-	public function addLibrary(Library $library): void {
-		$functions = new Table(null, $library->getFunctions());
-		$this->scope->assign($library->getName(), $functions);
-		$this->metaMethods = array_merge_recursive($this->metaMethods, $library->getMetaMethods());
-	}
-
-	/**
-	 * Core library functions get added directly to the root scope. No meta-methods are expected.0
-	 */
-	public function addCoreLibrary(Library $library): void {
-		foreach ($library->getFunctions() as $name => $func) {
-			$this->root->assign($name, $func);
-		}
 	}
 
 	public function getMetaMethod(string $type, string $method): ?Invokable {

@@ -84,7 +84,7 @@ class Luar {
 	public function getGlobals(): array {
 		$globals = [];
 		foreach ($this->interpreter->getRoot()->getAssigns() as $k => $o) {
-			$globals[$k] = $o->getValue();
+			$globals[$k] = self::objectToPhp($o);
 		}
 
 		return $globals;

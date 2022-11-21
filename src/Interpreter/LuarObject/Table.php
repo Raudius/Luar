@@ -33,7 +33,7 @@ class Table extends Scope implements LuarObject, JsonSerializable  {
 
 		foreach ($array as $key => $item) {
 			if (!$item instanceof LuarObject) {
-				$item = Luar::makeLuarObject($item);
+				$item = Luar::packLuarObject($item);
 			}
 
 			$array[$key] = $item;
@@ -116,6 +116,6 @@ class Table extends Scope implements LuarObject, JsonSerializable  {
 	}
 
 	public function jsonSerialize(): array {
-		return Luar::objectToPhp($this);
+		return Luar::unpackLuarObject($this);
 	}
 }

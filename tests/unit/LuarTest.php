@@ -71,7 +71,7 @@ LUA;
 
 		foreach ($values as $type => $vs) {
 			foreach ($vs as $v) {
-				$luarObj = Luar::makeLuarObject($v);
+				$luarObj = Luar::packLuarObject($v);
 				$this->assertEquals($type, $luarObj->getType());
 			}
 		}

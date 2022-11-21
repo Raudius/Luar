@@ -50,7 +50,7 @@ class Invokable implements LuarObject {
 		$newCallable = static function (ObjectList $objectList) use ($callable) {
 			$args = array_map(
 				static function (LuarObject $object) {
-					return Luar::objectToPhp($object);
+					return Luar::unpackLuarObject($object);
 				}, $objectList->getObjects()
 			);
 

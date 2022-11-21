@@ -1,18 +1,20 @@
 {
     "name": "raudius/luar",
-    "description": "Lua parser for PHP using ANTLR",
+    "description": "Lua parser written in PHP",
     "type": "library",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "require": {
         "antlr/antlr4-php-runtime": "^0.5.1",
         "ext-json": "*"
     },
+    "license": "GPL-2.0-only",
     "require-dev": {
         "phpunit/phpunit": "^9.5"
     },
     "authors": [
         {
-            "name": "raudius"
+            "name": "Raul Ferreira Fuentes",
+            "email": "r.ferreira.fuentes@gmail.com"
         }
     ],
     "autoload": {

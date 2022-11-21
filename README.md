@@ -1,11 +1,34 @@
 # Luar
 
-Luar is an interpreter for embedding Lua into PHP applications.
+Luar is a Lua interpreter written in PHP.
 
-Luar implements a reduced version of Lua which also packages some essential Lua libraries. As such Luar offers forward-compatibility with Lua with some minor caveats:
+Luar implements a reduced version of Lua and also packages some essential Lua libraries. As such Luar offers forward-compatibility with Lua with some minor caveats:
 
-* The math/string libraries use PHP number/string handling on the backend; not all behaviour has been replicated (e.g. division by zero, integer overflow)
+* The math/string libraries use PHP number/string handling; much of the edge-case behaviour has been replicated (e.g. division by zero, integer overflow)
 * Not all core functions and libraries are available, but a method is provided to inject your own
 * Some language constructs are not implemented (e.g. variable attributes, go-to statements)
 
+## Installation
+```
+composer require raudius/luar
+```
+
+## Usage
+
+```php
+$luar = new Luar();
+$luar->assign('world', 'Moon');
+$luar->assign('hello_world', function ($name='world') {
+    return "Hello, $name!";
+});
+
+$program = '
+    local greeting = hello_world(world)
+    print(greeting)
+    
+    return greeting
+';
+
+$greeting = $luar->eval($program);
+```
 

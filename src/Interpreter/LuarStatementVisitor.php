@@ -221,7 +221,6 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 			throw new LuarRuntimeException('[INTERNAL ERROR] Could not parse while loop', $context);
 		}
 
-
 		do {
 			$newScope = new Scope($this->interpreter->getScope());
 			$newScope->setExpectedExit(Scope::EXIT_EXPECT_BREAK_CONTINUE);

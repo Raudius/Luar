@@ -249,19 +249,23 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 	}
 
 	public function visitExpOr(Context\ExpOrContext $context): LuarObject {
-		$v1 = $this->visitExp($context->exp(0))->getValue();
-		if ($v1) return new Literal($v1);
-		$v2 = $this->visitExp($context->exp(1))->getValue();
-		if ($v2) return new Literal($v2);
-		return new Literal(false);
+		$o1 = $this->visitExp($context->exp(0));
+		$o2 = $this->visitExp($context->exp(1));
+
+		if ($this->isTrue($o1->getValue())) return $o1;
+		if ($this->isTrue($o2->getValue())) return $o2;
+
+		return new Literal(null);
 	}
 
 	public function visitExpAnd(Context\ExpAndContext $context): LuarObject {
-		$v1 = $this->visitExp($context->exp(0))->getValue();
-		if (!$v1) return new Literal(false);
-		$v2 = $this->visitExp($context->exp(1))->getValue();
-		if (!$v2) return new Literal(false);
-		return new Literal(true);
+		$o1 = $this->visitExp($context->exp(0));
+		$o2 = $this->visitExp($context->exp(1));
+
+		if (!$this->isTrue($o1->getValue())) return new Literal(null);
+		if (!$this->isTrue($o2->getValue())) return new Literal(null);
+
+		return $o2;
 	}
 
 	public function visitExpConcat(Context\ExpConcatContext $context): LuarObject {

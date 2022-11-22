@@ -1,5 +1,5 @@
 /.idea
 /vendor
 /build
-*.lua
+/*.lua
 .phpunit.result.cache

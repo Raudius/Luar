@@ -13,6 +13,7 @@ use Raudius\Luar\Luar;
  */
 class LuaSuiteTest extends TestCase {
 	private function testLua(string $program): void {
+		ini_set('xdebug.max_nesting_level', -1);
 		$successReturn = "Luar OK!";
 		$program .= "\nreturn '$successReturn'";
 

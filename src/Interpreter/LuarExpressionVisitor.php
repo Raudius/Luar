@@ -1,7 +1,6 @@
 <?php
 namespace Raudius\Luar\Interpreter;
 
-use Raudius\Luar\Interpreter\LuarObject\DivZero;
 use Raudius\Luar\Interpreter\LuarObject\ObjectList;
 use Raudius\Luar\Interpreter\LuarObject\Literal;
 use Raudius\Luar\Interpreter\LuarObject\LuarObject;
@@ -91,9 +90,12 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 
 	public function visitTableconstructor(Context\TableconstructorContext $context): Table {
 		$fieldList = $context->fieldlist() ? $this->visitFieldlist($context->fieldlist()) : [];
-		return Table::fromArray($fieldList);
+		return new Table(null, $fieldList);
 	}
 
+	/**
+	 * @return LuarObject[]
+	 */
 	public function visitFieldlist(Context\FieldlistContext $context): array {
 		$fieldContexts = $context->field();
 		if (!$fieldContexts) {
@@ -111,13 +113,13 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 			}
 
 			if ($key === null && $object instanceof ObjectList) {
-				$objects = $object->getObjects();
-				foreach ($objects as $object) {
-					$fields[$n++] = $object->getValue();
+				$count = $object->count();
+				for ($i=0; $i<$count; $i++) {
+					$fields[$n++] = $object->getObject($i);
 				}
 			} else {
 				$key = $key ?? $n++;
-				$fields[$key] = $object->getValue();
+				$fields[$key] = $object;
 			}
 		}
 		return $fields;
@@ -181,7 +183,6 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 		if ($o1->getType() !== $o2->getType()) {
 			throw new LuarRuntimeException("attempt to compare {$o1->getType()} with {$o2->getType()}", $context);
 		}
-
 
 		switch ($op) {
 			case '<':  return new Literal(($v1 <=> $v2) === -1);
@@ -250,22 +251,16 @@ abstract class LuarExpressionVisitor extends LuarBaseVisitor {
 
 	public function visitExpOr(Context\ExpOrContext $context): LuarObject {
 		$o1 = $this->visitExp($context->exp(0));
-		$o2 = $this->visitExp($context->exp(1));
-
 		if ($this->isTrue($o1->getValue())) return $o1;
-		if ($this->isTrue($o2->getValue())) return $o2;
 
-		return new Literal(null);
+		return $this->visitExp($context->exp(1));
 	}
 
 	public function visitExpAnd(Context\ExpAndContext $context): LuarObject {
 		$o1 = $this->visitExp($context->exp(0));
-		$o2 = $this->visitExp($context->exp(1));
+		if (!$this->isTrue($o1->getValue())) return $o1;
 
-		if (!$this->isTrue($o1->getValue())) return new Literal(null);
-		if (!$this->isTrue($o2->getValue())) return new Literal(null);
-
-		return $o2;
+		return $this->visitExp($context->exp(1));
 	}
 
 	public function visitExpConcat(Context\ExpConcatContext $context): LuarObject {

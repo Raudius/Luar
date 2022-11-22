@@ -297,4 +297,36 @@ class LibString extends Library {
 			return new ObjectList([ new Literal($return) ]);
 		});
 	}
+
+	private function gmatch(): Invokable {
+		return new Invokable(function (ObjectList $ol) {
+			$subject = (string) $this->validateTypeN($ol, ['string'], 0)->getValue();
+			$pattern = (string) $this->validateTypeN($ol, ['string'], 1)->getValue();
+
+			$regex = $this->patternHelper->patternToRegex($pattern);
+			preg_match_all($regex, $subject, $matches);
+
+			$countMatches = count($matches);
+			$results = [];
+			foreach ($matches[0] as $i => $match) {
+				$result = [];
+
+				for ($group=1; $group<$countMatches; $group++) {
+					$result[] = new Literal($matches[$group][$i]);
+				}
+
+				if ($result === []) { // No groups -> return full match
+					$result[] = new Literal($match);
+				}
+
+				$results[] = new ObjectList($result);
+			}
+
+			return Invokable::fromPhpCallable(function () use (&$results) {
+				$current = current($results);
+				next($results);
+				return $current ?: new ObjectList([]);
+			});
+		});
+	}
 }

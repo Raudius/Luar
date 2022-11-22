@@ -1,6 +1,6 @@
 {
     "name": "raudius/luar",
-    "description": "Lua parser written in PHP",
+    "description": "Lua interpreter written entirely in PHP",
     "type": "library",
     "version": "0.1.0",
     "require": {

@@ -67,9 +67,9 @@ class LibString extends Library {
 
 	private function byte(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$subject = $this->validateTypeN($ol, ['string'], 0); /** @var string $subject */
-			$i = $this->validateTypeN($ol, ['number', 'nil'], 1)->getValue() ?? 1;
-			$j = $this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? $i;
+			$subject = $this->validateObjectListParameter($ol, ['string'], 0); /** @var string $subject */
+			$i = $this->validateObjectListParameter($ol, ['number', 'nil'], 1)->getValue() ?? 1;
+			$j = $this->validateObjectListParameter($ol, ['number', 'nil'], 2)->getValue() ?? $i;
 
 			$i = ($i < 0) ? strlen($subject) + $i + 1 : $i;
 			$i = max($i, 1);
@@ -108,10 +108,10 @@ class LibString extends Library {
 
 	public function find(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$subject = (string) $this->validateTypeN($ol, ['string'], 0)->getValue();
-			$pattern = (string) $this->validateTypeN($ol, ['string'], 1)->getValue();
-			$index = $this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? 0;
-			$plain = $this->validateTypeN($ol, ['boolean', 'number','nil'],  3)->getValue() ?: false;
+			$subject = (string) $this->validateObjectListParameter($ol, ['string'], 0)->getValue();
+			$pattern = (string) $this->validateObjectListParameter($ol, ['string'], 1)->getValue();
+			$index = $this->validateObjectListParameter($ol, ['number', 'nil'], 2)->getValue() ?? 0;
+			$plain = $this->validateObjectListParameter($ol, ['boolean', 'number','nil'],  3)->getValue() ?: false;
 
 			if ($index !== null) {
 				$index = (($index === 0) ? 1 : $index);
@@ -152,9 +152,9 @@ class LibString extends Library {
 
 	public function match(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$subject = $this->validateTypeN($ol, ['string'], 0)->getValue(); /** @var string $subject */
-			$pattern = $this->validateTypeN($ol, ['string'], 1)->getValue(); /** @var string $pattern */
-			$index = $this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? 0; /** @var int $index */
+			$subject = $this->validateObjectListParameter($ol, ['string'], 0)->getValue(); /** @var string $subject */
+			$pattern = $this->validateObjectListParameter($ol, ['string'], 1)->getValue(); /** @var string $pattern */
+			$index = $this->validateObjectListParameter($ol, ['number', 'nil'], 2)->getValue() ?? 0; /** @var int $index */
 
 			if ($index !== null) {
 				$index = (($index === 0) ? 1 : $index);
@@ -177,7 +177,7 @@ class LibString extends Library {
 
 	private function format(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$subject = $this->validateTypeN($ol, ['string'], 0)->getValue(); /** @var string $subject */
+			$subject = $this->validateObjectListParameter($ol, ['string'], 0)->getValue(); /** @var string $subject */
 			$values = array_map(
 				static function (LuarObject $o) {
 					$value = $o->getValue();
@@ -229,9 +229,9 @@ class LibString extends Library {
 
 	private function rep(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$string = (string) $this->validateTypeN($ol, ['string'], 0)->getValue();
-			$times = (int) $this->validateTypeN($ol, ['number'], 1)->getValue();
-			$sep = $this->validateTypeN($ol, ['string', 'nil'], 2)->getValue() ?? '';
+			$string = (string) $this->validateObjectListParameter($ol, ['string'], 0)->getValue();
+			$times = (int) $this->validateObjectListParameter($ol, ['number'], 1)->getValue();
+			$sep = $this->validateObjectListParameter($ol, ['string', 'nil'], 2)->getValue() ?? '';
 
 			$len = strlen($string) + strlen($sep);
 			if ($times === 0 || $len === 0) {
@@ -249,9 +249,9 @@ class LibString extends Library {
 
 	private function sub(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$subject = (string) $this->validateTypeN($ol, ['string'], 0)->getValue();
-			$i = (int) $this->validateTypeN($ol, ['number'], 1)->getValue();
-			$j = $this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? -1;
+			$subject = (string) $this->validateObjectListParameter($ol, ['string'], 0)->getValue();
+			$i = (int) $this->validateObjectListParameter($ol, ['number'], 1)->getValue();
+			$j = $this->validateObjectListParameter($ol, ['number', 'nil'], 2)->getValue() ?? -1;
 
 			$i = ($i < 0) ? strlen($subject) + $i + 1 : $i;
 			$i = max($i, 1);
@@ -269,10 +269,10 @@ class LibString extends Library {
 
 	private function gsub(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$subject = (string) $this->validateTypeN($ol, ['string'], 0)->getValue();
-			$pattern = (string) $this->validateTypeN($ol, ['string'], 1)->getValue();
-			$repl = $this->validateTypeN($ol, ['string', 'number', 'table', 'function'], 2);
-			$n = $this->validateTypeN($ol, ['number', 'nil'], 3)->getValue() ?? -1;
+			$subject = (string) $this->validateObjectListParameter($ol, ['string'], 0)->getValue();
+			$pattern = (string) $this->validateObjectListParameter($ol, ['string'], 1)->getValue();
+			$repl = $this->validateObjectListParameter($ol, ['string', 'number', 'table', 'function'], 2);
+			$n = $this->validateObjectListParameter($ol, ['number', 'nil'], 3)->getValue() ?? -1;
 
 			$regex = $this->patternHelper->patternToRegex($pattern);
 
@@ -300,8 +300,8 @@ class LibString extends Library {
 
 	private function gmatch(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$subject = (string) $this->validateTypeN($ol, ['string'], 0)->getValue();
-			$pattern = (string) $this->validateTypeN($ol, ['string'], 1)->getValue();
+			$subject = (string) $this->validateObjectListParameter($ol, ['string'], 0)->getValue();
+			$pattern = (string) $this->validateObjectListParameter($ol, ['string'], 1)->getValue();
 
 			$regex = $this->patternHelper->patternToRegex($pattern);
 			preg_match_all($regex, $subject, $matches);

@@ -64,7 +64,7 @@ class LibMath extends Library {
 
 	private function modf(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$n = (float) $this->validateTypeN($ol, ['number'], 0)->getValue();
+			$n = (float) $this->validateObjectListParameter($ol, ['number'], 0)->getValue();
 			$int = floor(abs($n));
 			$float = (float) (abs($n) - $int);
 
@@ -97,8 +97,8 @@ class LibMath extends Library {
 
 	private function random(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$m = $this->validateTypeN($ol, ['number', 'nil'], 0)->getValue();
-			$n = $this->validateTypeN($ol, ['number', 'nil'], 1)->getValue();
+			$m = $this->validateObjectListParameter($ol, ['number', 'nil'], 0)->getValue();
+			$n = $this->validateObjectListParameter($ol, ['number', 'nil'], 1)->getValue();
 
 			$rand = null;
 			if ($m === null && $n === null) {
@@ -122,7 +122,7 @@ class LibMath extends Library {
 
 	private function randomseed(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$x = (int) $this->validateTypeN($ol, ['number'], 0)->getValue();
+			$x = (int) $this->validateObjectListParameter($ol, ['number'], 0)->getValue();
 			mt_srand($x);
 		});
 	}

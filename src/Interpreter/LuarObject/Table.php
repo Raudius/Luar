@@ -5,6 +5,9 @@ use JsonSerializable;
 use Raudius\Luar\Interpreter\Scope;
 use Raudius\Luar\Luar;
 
+/**
+ * This class represents the Lua table type inside the Luar interpreter.
+ */
 class Table extends Scope implements LuarObject, JsonSerializable  {
 	private ?array $keyList = null;
 	private ?int $length = null;
@@ -17,13 +20,24 @@ class Table extends Scope implements LuarObject, JsonSerializable  {
 		return $this->assigns;
 	}
 
+	/**
+	 * Table instantiation from a PHP array.
+	 *
+	 * @param array $array
+	 * @return static
+	 */
 	public static function fromArray(array $array): self {
 		return new self(null, self::reindexAndObjectify($array));
 	}
 
 	/**
-	 * Reindexes a PHP array to a Lua array.
-	 * // TODO: Move this function somewhere else?
+	 * Re-indexes a PHP array to a Lua array and converts all values to `LuarObject`s.
+	 * The operation is also done for arrays inside the array.
+	 *
+	 * Returns the same array as a `1-indexed` array of LuarObjects.
+	 *
+	 * @param array $array
+	 * @return array
 	 */
 	protected static function reindexAndObjectify(array $array): array {
 		if (isset($array[0])) {
@@ -56,6 +70,12 @@ class Table extends Scope implements LuarObject, JsonSerializable  {
 		return [new Literal(null), new Literal(null)];
 	}
 
+	/**
+	 * Returns the value for the given key.
+	 *
+	 * @param string $key
+	 * @return LuarObject
+	 */
 	public function get(string $key): LuarObject {
 		if ($this->has($key)) {
 			return parent::get($key);
@@ -65,6 +85,13 @@ class Table extends Scope implements LuarObject, JsonSerializable  {
 			: new Literal(null);
 	}
 
+	/**
+	 * Adds a key/value to a table.
+	 *
+	 * @param string $key
+	 * @param LuarObject $value
+	 * @return void
+	 */
 	public function assign(string $key, LuarObject $value): void {
 		parent::assign($key, $value);
 		$this->keyList = null;
@@ -93,6 +120,12 @@ class Table extends Scope implements LuarObject, JsonSerializable  {
 		return 'table';
 	}
 
+	/**
+	 * Returns the length of the table. This is the length as defined by Lua:
+	 * https://www.lua.org/manual/5.3/manual.html#3.4.7
+	 *
+	 * @return int
+	 */
 	public function getLength(): int {
 		if ($this->length !== null) {
 			return $this->length;
@@ -107,14 +140,33 @@ class Table extends Scope implements LuarObject, JsonSerializable  {
 		return sprintf('%s: 0x%06x', $this->getType(), spl_object_id($this));
 	}
 
+	/**
+	 * Sets the meta-table for this object.
+	 * See Lua documentation for more information on meta-tables.
+	 * https://www.lua.org/manual/5.3/manual.html#pdf-setmetatable
+	 *
+	 * @param Table|null $table
+	 * @return void
+	 */
 	public function setMetaTable(?Table $table): void {
 		$this->metaTable = $table;
 	}
 
+	/**
+	 * Returns the meta table for this table. If none, returns a `nil` literal `LuaObject`
+	 * See: https://www.lua.org/manual/5.3/manual.html#pdf-getmetatable
+	 *
+	 * @return LuarObject
+	 */
 	public function getMetaTable(): LuarObject {
 		return $this->metaTable ?: new Literal(null);
 	}
 
+	/**
+	 * Converts the table to a JSON-serializable array.
+	 *
+	 * @return array
+	 */
 	public function jsonSerialize(): array {
 		return Luar::unpackLuarObject($this);
 	}

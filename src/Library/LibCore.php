@@ -35,7 +35,7 @@ class LibCore extends Library {public function getName(): string {
 
 	private function pcall(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$function = $this->validateTypeN($ol, ['function'], 0); /** @var Invokable $function */
+			$function = $this->validateObjectListParameter($ol, ['function'], 0); /** @var Invokable $function */
 			$args = $ol->slice(1);
 
 			$success = true;
@@ -130,8 +130,8 @@ class LibCore extends Library {public function getName(): string {
 
 	private function setmetatable(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
-			$metatable = $this->validateTypeN($ol, ['table', 'nil'], 1);
+			$table = $this->validateObjectListParameter($ol, ['table'], 0); /** @var Table $table */
+			$metatable = $this->validateObjectListParameter($ol, ['table', 'nil'], 1);
 
 			if ($metatable instanceof Table) {
 				$table->setMetaTable($metatable);
@@ -142,7 +142,7 @@ class LibCore extends Library {public function getName(): string {
 	}
 	private function getmetatable(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
+			$table = $this->validateObjectListParameter($ol, ['table'], 0); /** @var Table $table */
 			return new ObjectList([$table->getMetaTable()]);
 		});
 	}
@@ -173,11 +173,11 @@ class LibCore extends Library {public function getName(): string {
 
 	private function ipairs(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
+			$table = $this->validateObjectListParameter($ol, ['table'], 0); /** @var Table $table */
 
 			$iterator = new Invokable(function (ObjectList $ol) {
-				$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
-				$index = (int) $this->validateTypeN($ol, ['number'],1)->getValue() + 1; /** @var int $index */
+				$table = $this->validateObjectListParameter($ol, ['table'], 0); /** @var Table $table */
+				$index = (int) $this->validateObjectListParameter($ol, ['number'],1)->getValue() + 1; /** @var int $index */
 
 				if ($table->has($index)) {
 					return new ObjectList([
@@ -195,7 +195,7 @@ class LibCore extends Library {public function getName(): string {
 
 	private function next(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
+			$table = $this->validateObjectListParameter($ol, ['table'], 0); /** @var Table $table */
 			$prevKey = $ol->getObject(1)->getValue();
 
 			return new ObjectList($table->next($prevKey));
@@ -204,7 +204,7 @@ class LibCore extends Library {public function getName(): string {
 
 	private function pairs(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
+			$table = $this->validateObjectListParameter($ol, ['table'], 0); /** @var Table $table */
 			return new ObjectList([$this->next(), $table, new Literal(null)]);
 		});
 	}

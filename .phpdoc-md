@@ -1,0 +1,15 @@
+<?php
+return (object)[
+    'rootNamespace' => 'Raudius\Luar',
+    'destDirectory' => 'docs',
+    'format' => 'github',
+    'classes' => [
+        'Raudius\Luar\Luar',
+        'Raudius\Luar\Library\Library',
+        'Raudius\Luar\Interpreter\LuarObject\LuarObject',
+        'Raudius\Luar\Interpreter\LuarObject\Invokable',
+        'Raudius\Luar\Interpreter\LuarObject\Literal',
+        'Raudius\Luar\Interpreter\LuarObject\ObjectList',
+        'Raudius\Luar\Interpreter\LuarObject\Table',
+    ],
+];

@@ -71,8 +71,21 @@ class ObjectList implements LuarObject {
 
 	/**
 	 * Returns the "raw" object at the specified index.
-	 * Raw object means that other ObjectLists do not get expanded.
+	 * Raw object means that other ObjectLists contained in the ObjectList do not get expanded/flattened.
 	 *
+	 * Example:
+	 * ```lua
+	 * function foo(...)
+	 *   return ..., 'foo', 'bar', ...
+	 * end
+	 *
+	 * print(foo(1,2,3))
+	 * ```
+	 * In this example the raw objects would be:
+	 * [ `0`=> `ObjectList<1,2,3>`, `1`=> `'foo'`, `3`=> `'bar'`, `4`=> `ObjectList<1,2,3>` ]
+	 *
+	 * While the expanded objets would correspond with the value printed by the snippet:
+	 * [ `0`=> `1`, `1`=> `'foo'`, `3`=> `'bar'`, `4`=> `1`, `5`=> `2`, `6`=> `3` ]
 	 * @param int $idx
 	 * @return LuarObject
 	 */
@@ -80,7 +93,14 @@ class ObjectList implements LuarObject {
 		return $this->objects[$idx] ?? new Literal(null);
 	}
 
-	public function slice(int $idx, $size=null): ObjectList {
+	/**
+	 * Slices the list, returning a sub-list.
+	 *
+	 * @param int $idx - Index where we want the sublist to start
+	 * @param int|null $size - Size of the subindex (if null, will return all the items following the starting index)
+	 * @return ObjectList
+	 */
+	public function slice(int $idx, ?int $size=null): ObjectList {
 		$slice = [];
 		$objects = $this->getObjects();
 
@@ -92,14 +112,23 @@ class ObjectList implements LuarObject {
 		return new ObjectList($slice);
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	public function __toString(): string{
 		return 'ObjectList';
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	public function getType(): string {
 		return $this->getObject(0)->getType();
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	public function count(): int {
 		return count($this->getObjects());
 	}

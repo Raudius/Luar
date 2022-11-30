@@ -1,5 +1,7 @@
-/tests         	export-ignore
-Lua.g4       	export-ignore
-Makefile		export-ignore
-.gitignore		export-ignore
-.gitattributes	export-ignore
+/tests         		export-ignore
+/docs         		export-ignore
+Lua.g4       		export-ignore
+Makefile			export-ignore
+.gitignore			export-ignore
+.gitattributes		export-ignore
+phpDocumentor.xml	export-ignore

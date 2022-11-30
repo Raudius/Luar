@@ -30,10 +30,10 @@ class LibTable extends Library {
 
 	private function concat(): Invokable {
 		return new Invokable(function (ObjectList $ol): ObjectList {
-			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
-			$sep = $this->validateTypeN($ol, ['string', 'nil'], 1)->getValue() ?? ''; /** @var string $sep */
-			$start = (int) ($this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? 1); /** @var int $start */
-			$end = (int) ($this->validateTypeN($ol, ['number', 'nil'], 3)->getValue() ?? $table->getLength()); /** @var int|null $end */
+			$table = $this->validateObjectListParameter($ol, ['table'], 0); /** @var Table $table */
+			$sep = $this->validateObjectListParameter($ol, ['string', 'nil'], 1)->getValue() ?? ''; /** @var string $sep */
+			$start = (int) ($this->validateObjectListParameter($ol, ['number', 'nil'], 2)->getValue() ?? 1); /** @var int $start */
+			$end = (int) ($this->validateObjectListParameter($ol, ['number', 'nil'], 3)->getValue() ?? $table->getLength()); /** @var int|null $end */
 
 			$string = '';
 			for ($i=$start; $i<=$end; $i++) {
@@ -60,9 +60,9 @@ class LibTable extends Library {
 
 	private function insert(): Invokable {
 		return new Invokable(function (ObjectList $ol): void {
-			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
+			$table = $this->validateObjectListParameter($ol, ['table'], 0); /** @var Table $table */
 			if ($ol->count() === 3) {
-				$pos = (int) $this->validateTypeN($ol, ['number'], 1)->getValue();
+				$pos = (int) $this->validateObjectListParameter($ol, ['number'], 1)->getValue();
 				$value = $ol->getObject(3);
 			} else {
 				$pos = $table->getLength() + 1;
@@ -100,9 +100,9 @@ class LibTable extends Library {
 
 	private function remove(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
+			$table = $this->validateObjectListParameter($ol, ['table'], 0); /** @var Table $table */
 			$length = $table->getLength();
-			$index = (int) ($this->validateTypeN($ol, ['number', 'nil'], 1)->getValue() ?? $length);
+			$index = (int) ($this->validateObjectListParameter($ol, ['number', 'nil'], 1)->getValue() ?? $length);
 
 
 			if ($index < 1 || $index > $length) {
@@ -122,11 +122,11 @@ class LibTable extends Library {
 
 	private function unpack(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
+			$table = $this->validateObjectListParameter($ol, ['table'], 0); /** @var Table $table */
 			$length = $table->getLength();
 
-			$start = (int) ($this->validateTypeN($ol, ['number', 'nil'], 1)->getValue() ?? 1);
-			$end = (int) ($this->validateTypeN($ol, ['number', 'nil'], 2)->getValue() ?? $length);
+			$start = (int) ($this->validateObjectListParameter($ol, ['number', 'nil'], 1)->getValue() ?? 1);
+			$end = (int) ($this->validateObjectListParameter($ol, ['number', 'nil'], 2)->getValue() ?? $length);
 
 			$objects = [];
 			for ($i=$start; $i<=$end; $i++) {
@@ -139,8 +139,8 @@ class LibTable extends Library {
 
 	private function sort(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
-			$table = $this->validateTypeN($ol, ['table'], 0); /** @var Table $table */
-			$cmp = $this->validateTypeN($ol, ['function', 'nil'], 1) ?? $this->compare(); /** @var Invokable|null $cmp */
+			$table = $this->validateObjectListParameter($ol, ['table'], 0); /** @var Table $table */
+			$cmp = $this->validateObjectListParameter($ol, ['function', 'nil'], 1) ?? $this->compare(); /** @var Invokable|null $cmp */
 
 			$length = $table->getLength();
 			$items = [];
@@ -162,13 +162,13 @@ class LibTable extends Library {
 	private function move(): Invokable {
 		return new Invokable(function (ObjectList $ol) {
 			/** @var Table $table */
-			$table = $this->validateTypeN($ol, ['table'], 0);
-			$f = (int) $this->validateTypeN($ol, ['number'], 1)->getValue();
-			$e = (int) $this->validateTypeN($ol, ['number'], 2)->getValue();
-			$t = (int) $this->validateTypeN($ol, ['number'], 3)->getValue();
+			$table = $this->validateObjectListParameter($ol, ['table'], 0);
+			$f = (int) $this->validateObjectListParameter($ol, ['number'], 1)->getValue();
+			$e = (int) $this->validateObjectListParameter($ol, ['number'], 2)->getValue();
+			$t = (int) $this->validateObjectListParameter($ol, ['number'], 3)->getValue();
 
 			/** @var Table $table2 */
-			$table2 = $this->validateTypeN($ol, ['table', 'nil'], 4) ?? $table;
+			$table2 = $this->validateObjectListParameter($ol, ['table', 'nil'], 4) ?? $table;
 
 			$e = min($e, $table->getLength());
 			while ($f <= $e) {

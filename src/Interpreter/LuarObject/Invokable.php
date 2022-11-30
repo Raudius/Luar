@@ -4,11 +4,19 @@ namespace Raudius\Luar\Interpreter\LuarObject;
 use Raudius\Luar\Interpreter\Scope;
 use Raudius\Luar\Luar;
 
+/**
+ * This type of `LuarObject` is how Lua functions are stored during runtime. It is also used for defining functions aheead of runtime via a `Library` or via `Luar->assign`.
+ *
+ * - `Invokable::fromPhpCallbale()`, is the most convenient way to instantiate this class, as you can simply write the function as you would in PHP.
+ * - `new Invokable()`, requires understanding how `ObjectList` operates, but offers more direct access to the underlying `LuarObjects` passed in the parameters.
+ */
 class Invokable implements LuarObject {
 	/** @var callable $value */
 	private $value;
 
 	/**
+	 * The function must expect a single argument of type `ObjectList`
+	 *
 	 * @param callable $function
 	 */
 	public function __construct(callable $function) {
@@ -19,6 +27,13 @@ class Invokable implements LuarObject {
 		return $this->value;
 	}
 
+	/**
+	 * Calls the function.
+	 *
+	 * You generally should not need to do call this function directly.
+	 * @param ObjectList $args
+	 * @return ObjectList
+	 */
 	public function invoke(ObjectList $args): ObjectList {
 		$result = ($this->value)($args);
 
@@ -46,6 +61,18 @@ class Invokable implements LuarObject {
 	}
 
 
+	/**
+	 * Creates an `Invokable` from a PHP function
+	 *
+	 * ```php
+	 * $add = Invokable::fromPhpCallable(function ($a, $b) {
+	 *   return $a + $b;
+	 * });
+	 * ```
+	 *
+	 * @param callable $callable
+	 * @return Invokable
+	 */
 	public static function fromPhpCallable(callable $callable): Invokable {
 		$newCallable = static function (ObjectList $objectList) use ($callable) {
 			$args = array_map(
@@ -60,6 +87,9 @@ class Invokable implements LuarObject {
 		return new Invokable($newCallable);
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	public function getType(): string {
 		return 'function';
 	}

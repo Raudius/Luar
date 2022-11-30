@@ -4,6 +4,9 @@ namespace Raudius\Luar\Interpreter\LuarObject;
 use Raudius\Luar\Interpreter\LuarRuntimeException;
 use Raudius\Luar\Interpreter\Scope;
 
+/**
+ * This class is for internal use for holding references to objects and should generally NOT be used when using this library.
+ */
 class Reference implements LuarObject {
 	public const VAR_INTERNAL_ELIPSIS = '__elipsis__';
 	public const VAR_INTERNAL_GLOBAL = '_G';

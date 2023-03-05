@@ -178,9 +178,11 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 			throw new LuarRuntimeException('[INTERNAL ERROR] Could not parse generic for loop', $context);
 		}
 
-		[$i, $v] = array_map(static function (TerminalNode $node): string {
+		$namesStrings = array_map(static function (TerminalNode $node): string {
 			return $node->getText();
 		}, $names);
+		$i = $namesStrings[0] ?? null;
+		$v = $namesStrings[1] ?? null;
 
 		$iterator = $explist->getObject(0);
 		$table = $explist->getObject(1);
@@ -188,9 +190,6 @@ class LuarStatementVisitor extends LuarExpressionVisitor {
 
 		if ($iterator->getType() !== 'function') {
 			throw new LuarRuntimeException('Generic for loop, expects first item in expression list to be an function.');
-		}
-		if ($table->getType() !== 'table') {
-			throw new LuarRuntimeException('Generic for loop, expects second item in expression list to be a table. ');
 		}
 
 		while (

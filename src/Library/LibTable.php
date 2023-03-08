@@ -63,10 +63,10 @@ class LibTable extends Library {
 			$table = $this->validateObjectListParameter($ol, ['table'], 0); /** @var Table $table */
 			if ($ol->count() === 3) {
 				$pos = (int) $this->validateObjectListParameter($ol, ['number'], 1)->getValue();
-				$value = $ol->getObject(3);
+				$value = $ol->getObject(2);
 			} else {
 				$pos = $table->getLength() + 1;
-				$value = $ol->getObject(2);
+				$value = $ol->getObject(1);
 			}
 
 			if ($pos <= 0) {

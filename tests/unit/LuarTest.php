@@ -90,4 +90,31 @@ LUA;
 		$result = array_values($luar->eval($program));
 		$this->assertSame(['foo', 'bar', 'baz'], array_map(static fn ($value) => $value->getValue(), $result));
 	}
+
+	public function testMatchMatchesNonDelimiterChars(): void {
+		$program = <<<LUA
+		return string.match('foo;bar;baz', '([^;]+)')
+		LUA;
+
+		$luar = new Luar();
+		$this->assertSame('foo', $luar->eval($program));
+	}
+
+	public function testMatchLiteralHyphen(): void {
+		$program = <<<LUA
+		return string.match('a-b-c', '-')
+		LUA;
+
+		$luar = new Luar();
+		$this->assertSame('-', $luar->eval($program));
+	}
+
+	public function testMatchLiteralQuestionMark(): void {
+		$program = <<<LUA
+		return string.match('a?b?c', '?')
+		LUA;
+
+		$luar = new Luar();
+		$this->assertSame('?', $luar->eval($program));
+	}
 }

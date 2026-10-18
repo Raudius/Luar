@@ -25,7 +25,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 		$this->interpreter = $interpreter;
 	}
 
-	public function visitBlock(Context\BlockContext $context, Scope $scopeToPush = null): Scope {
+	public function visitBlock(Context\BlockContext $context, ?Scope $scopeToPush = null): Scope {
 		$this->interpreter->pushScope($scopeToPush);
 
 		$child = null;
@@ -55,7 +55,7 @@ abstract class LuarBaseVisitor extends LuaBaseVisitor {
 		return $this->interpreter->popScope();
 	}
 
-	protected function visitExp(Context\ExpContext $context, Scope $scope = null): LuarObject {
+	protected function visitExp(Context\ExpContext $context, ?Scope $scope = null): LuarObject {
 		$scope && $this->interpreter->pushScope($scope);
 
 		$result = $this->visit($context);

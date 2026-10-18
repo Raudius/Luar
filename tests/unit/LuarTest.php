@@ -76,4 +76,18 @@ LUA;
 			}
 		}
 	}
+
+	public function testGmatchMatchesNonDelimiterChars(): void {
+		$program = <<<LUA
+		local t = {}
+		for str in string.gmatch('foo;bar;baz', '([^;]+)') do
+			table.insert(t, str)
+		end
+		return t
+		LUA;
+
+		$luar = new Luar();
+		$result = array_values($luar->eval($program));
+		$this->assertSame(['foo', 'bar', 'baz'], array_map(static fn ($value) => $value->getValue(), $result));
+	}
 }

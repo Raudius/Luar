@@ -30,7 +30,7 @@ class PatternHelper {
 				$r = $this->controlCharToRegex($char);
 
 				if ($char === '^' && $i > 0 && $patternChars[$i-1] === '[') {
-					$r = "\\^";
+					$r = '^';
 				} elseif ($char === '$' && ($i+1) === $count) {
 					$r = "$";
 				}

@@ -1,4 +1,4 @@
-ANTLR_VERSION:=4.9.3
+ANTLR_VERSION:=4.13.2
 BUILD_TOOLS_DIR:=$(CURDIR)/build
 
 antlr-build:

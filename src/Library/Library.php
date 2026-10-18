@@ -132,7 +132,7 @@ abstract class Library {
 	 * @param int|null $nArgs - Number of arguments expected (`NULL` for any)
 	 * @return Invokable
 	 */
-	protected function fromPhpFunction(string $function, int $nArgs=null): Invokable {
+	protected function fromPhpFunction(string $function, ?int $nArgs=null): Invokable {
 		return Invokable::fromPhpCallable(
 			static function (...$args) use ($function, $nArgs) {
 				if ($nArgs !== null) {

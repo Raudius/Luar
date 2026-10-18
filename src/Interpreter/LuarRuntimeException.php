@@ -11,9 +11,9 @@ class LuarRuntimeException extends Exception
 
 	public function __construct(
 		string $message,
-		ParserRuleContext $context = null,
+		?ParserRuleContext $context = null,
 		int $code = 0,
-		\Throwable $previous = null
+		?\Throwable $previous = null
 	) {
 		$context && $this->pushContext($context);
 		parent::__construct($message, $code, $previous);

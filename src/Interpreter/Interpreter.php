@@ -16,7 +16,7 @@ final class Interpreter {
 	private Scope $root;
 	private array $metaMethods = [];
 
-	public function __construct(Scope $scope = null) {
+	public function __construct(?Scope $scope = null) {
 		$this->scope = $scope ?? new Scope();
 		$this->root = $this->scope;
 	}

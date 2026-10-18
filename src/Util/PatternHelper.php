@@ -52,10 +52,10 @@ class PatternHelper {
 			case 'g': return "[\\x33-\\x7E]";
 			case 'l': return "[a-z]";
 			case 'p': return "[!\"#$%&'()*+,-./[\%\\]^_`{|}~]";
-			case 's'; return "[ \\t\\n\\v\\f\\r]";
-			case 'u'; return "[A-Z]";
-			case 'w'; return "[a-zA-Z0-9]";
-			case 'x'; return "[0-9a-fA-F]";
+            case 's': return "[ \\t\\n\\v\\f\\r]";
+            case 'u': return "[A-Z]";
+            case 'w': return "[a-zA-Z0-9]";
+            case 'x': return "[0-9a-fA-F]";
 		}
 
 		// Reference capture group

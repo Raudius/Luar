@@ -6,12 +6,18 @@ class PatternHelper {
 
 	public function matchPattern(string $subject, string $pattern, int $offset): array {
 		$regex = $this->patternToRegex($pattern);
-
 		preg_match($regex, $subject, $matches, PREG_OFFSET_CAPTURE, $offset);
-		return $matches;
+		return is_array($matches) ? $matches : [];
 	}
 
 	public function patternToRegex(string $pattern): string {
+        // Small hack to cover cases such as "-" which should match literally and not be translated to a regex pattern: *?
+        if (strlen($pattern) === 1) {
+            $isControlChar = $this->controlCharToRegex($pattern) !== null;
+            $pattern = $isControlChar ? "\\$pattern" : $pattern;
+            return "/$pattern/";
+        }
+
 		$regex = '';
 		$patternChars = str_split($pattern);
 		$escaping = false;
@@ -84,10 +90,10 @@ class PatternHelper {
 			case "]": return "]";
 			case "(": return "(";
 			case ")": return ")";
-			case "*": return "*";
+            case "-":
+            case "*": return "*";
 			case "+": return "+";
-			case "-": return "*?";
-			case "?": return "?";
+            case "?": return "?";
 		}
 
 		return null;
